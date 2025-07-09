@@ -10,6 +10,7 @@ interface Action {
   selector?: string;
   attribute?: string;
   steps?: Action[];
+  tag?: string;
 }
 
 interface Condition {
@@ -20,6 +21,7 @@ interface Condition {
   value?: string;
   ifTrue: Action[];
   ifFalse: Action[];
+  tag?: string;
 }
 
 interface Loop {
@@ -28,6 +30,7 @@ interface Loop {
   iterations?: number;
   condition?: { conditionType?: string; selector?: string; attribute?: string; value?: string };
   steps: Action[];
+  tag?: string;
 }
 
 type Step = Action | Condition | Loop;
@@ -49,15 +52,15 @@ export class VisualSelectorToolComponent implements OnInit {
   isExpanded: { [key: number]: boolean } = {};
 
   ngOnInit() {
-    if (!this.steps.length) this.steps = [{ type: 'action', actionType: 'page', name: 'scroll_down' }];
+    if (!this.steps.length) this.steps = [{ type: 'action', actionType: 'page', name: 'scroll_down', tag: '' }];
     this.steps.forEach((_, i) => this.isExpanded[i] = true);
   }
 
   addStep(type: 'action' | 'condition' | 'loop') {
     let newStep: Step;
-    if (type === 'action') newStep = { type: 'action' as const, actionType: 'page', name: 'scroll_down' };
-    else if (type === 'condition') newStep = { type: 'condition' as const, conditionType: 'element_found', selector: this.testSelectors[0], ifTrue: [], ifFalse: [] };
-    else newStep = { type: 'loop' as const, loopType: 'fixed_iterations', iterations: 1, steps: [], condition: { conditionType: 'element_found', selector: this.testSelectors[0] } };
+    if (type === 'action') newStep = { type: 'action', actionType: 'page', name: 'scroll_down', tag: '' };
+    else if (type === 'condition') newStep = { type: 'condition', conditionType: 'element_found', selector: this.testSelectors[0], ifTrue: [], ifFalse: [], tag: '' };
+    else newStep = { type: 'loop', loopType: 'fixed_iterations', iterations: 1, steps: [], condition: { conditionType: 'element_found', selector: this.testSelectors[0] }, tag: '' };
     this.steps.push(newStep);
     this.isExpanded[this.steps.length - 1] = true;
     this.emitChanges();
@@ -74,10 +77,10 @@ export class VisualSelectorToolComponent implements OnInit {
     const step = this.steps[index];
     if (step.type === 'condition' && (branch === 'ifTrue' || branch === 'ifFalse')) {
       if (!step[branch].length) step[branch] = [];
-      step[branch].push({ type: 'action', actionType: 'page', name: 'scroll_down' });
+      step[branch].push({ type: 'action', actionType: 'page', name: 'scroll_down', tag: '' });
     } else if ((step.type === 'loop' || (step.type === 'action' && (step as Action).name === 'sequence')) && branch === 'steps') {
       if (!step.steps) step.steps = [];
-      step.steps.push({ type: 'action', actionType: 'page', name: 'scroll_down' });
+      step.steps.push({ type: 'action', actionType: 'page', name: 'scroll_down', tag: '' });
     }
     this.emitChanges();
   }
@@ -95,9 +98,9 @@ export class VisualSelectorToolComponent implements OnInit {
   updateStepType(index: number, type: string) {
     const step = this.steps[index];
     let newStep: Step;
-    if (type === 'action') newStep = { type: 'action' as const, actionType: 'page', name: 'scroll_down' };
-    else if (type === 'condition') newStep = { type: 'condition' as const, conditionType: 'element_found', selector: this.testSelectors[0], ifTrue: [], ifFalse: [] };
-    else newStep = { type: 'loop' as const, loopType: 'fixed_iterations', iterations: 1, steps: [], condition: { conditionType: 'element_found', selector: this.testSelectors[0] } };
+    if (type === 'action') newStep = { type: 'action', actionType: 'page', name: 'scroll_down', tag: step.tag || '' };
+    else if (type === 'condition') newStep = { type: 'condition', conditionType: 'element_found', selector: this.testSelectors[0], ifTrue: [], ifFalse: [], tag: step.tag || '' };
+    else newStep = { type: 'loop', loopType: 'fixed_iterations', iterations: 1, steps: [], condition: { conditionType: 'element_found', selector: this.testSelectors[0] }, tag: step.tag || '' };
     this.steps[index] = newStep;
     this.emitChanges();
   }
@@ -162,6 +165,17 @@ export class VisualSelectorToolComponent implements OnInit {
     this.isExpanded[index] = !this.isExpanded[index];
   }
 
+  exportToJson() {
+    const jsonString = JSON.stringify(this.steps, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'process-steps.json';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
   private emitChanges() {
     this.stepsChange.emit(this.steps);
   }
@@ -177,7 +191,7 @@ export class VisualSelectorToolComponent implements OnInit {
       'action': step.type === 'action',
       'condition': step.type === 'condition',
       'loop': step.type === 'loop',
-      'bg-purple-50': step.type === 'action' && (step as Action)?.name === 'sequence'
+      'bg-purple-50': step.type === 'action' && (step as Action).name === 'sequence'
     };
   }
 

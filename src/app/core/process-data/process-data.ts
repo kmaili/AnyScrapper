@@ -28,6 +28,8 @@ export class ProcessDataService {
    * Gets the current process array synchronously.
    * @returns The current process array.
    */
+  
+  
   getCurrentProcess(): Step[] {
     return this.processSubject.value;
   }

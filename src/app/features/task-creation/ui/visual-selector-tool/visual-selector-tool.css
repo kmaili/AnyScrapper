@@ -1,11 +1,12 @@
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
 .visual-selector-container {
+    max-width: 800px;
     margin: 0 auto;
     background: #ffffff;
     border-radius: 12px;
-    border: 1px solid #e9ecef;
     overflow: hidden;
+    position: relative;
 }
 
 .content {
@@ -13,11 +14,10 @@
 }
 
 .process-step {
-    background: #f8f9fa;
+    background: #f9fafb;
     border-radius: 8px;
     margin-bottom: 8px;
-    border: 1px solid #e9ecef;
-    transition: all 0.3s ease;
+    position: relative;
 }
 
 .process-step::before {
@@ -41,6 +41,10 @@
     background: #34C759;
 }
 
+.process-step.bg-purple-50 {
+    background: #f5f3ff;
+}
+
 .step-header {
     display: flex;
     justify-content: space-between;
@@ -51,8 +55,8 @@
 
 .step-title {
     font-size: 14px;
-    font-weight: 500;
-    color: #1d1d1f;
+    font-weight: 600;
+    color: #1f2937;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -62,32 +66,35 @@
     font-size: 18px;
 }
 
-.step-icon.action {
-    color: #007AFF;
+.step-tag {
+    font-size: 12px;
+    color: #6b7280;
 }
 
-.step-icon.condition {
-    color: #FF3B30;
+.step-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.step-icon.loop {
-    color: #34C759;
+.collapse-icon {
+    font-size: 20px;
+    color: #6b7280;
 }
 
 .btn {
     border: none;
     border-radius: 6px;
-    font-weight: 500;
     font-size: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
     display: inline-flex;
     align-items: center;
     gap: 4px;
 }
 
-.btn-small {
-    padding: 4px 8px;
+.btn-icon {
+    padding: 8px 12px;
 }
 
 .btn-danger {
@@ -96,7 +103,7 @@
 }
 
 .btn-danger:hover {
-    background: #D70015;
+    background: #DC2626;
 }
 
 .btn-primary {
@@ -105,16 +112,46 @@
 }
 
 .btn-primary:hover {
-    background: #0056CC;
+    background: #2563EB;
+}
+
+.btn-export {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-export:hover {
+    background: #4b5563;
+}
+
+.fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+}
+
+.fab .material-icons {
+    font-size: 24px;
 }
 
 .step-content {
-    padding: 0 16px 16px;
+    padding: 0 16px 16px 16px;
+    transition: all 0.3s ease;
 }
 
 .step-content.hidden {
-    display: none一会儿
+    display: none;
 }
+
 .form-group {
     margin-bottom: 12px;
 }
@@ -125,37 +162,41 @@
     gap: 4px;
     font-size: 12px;
     font-weight: 500;
-    color: #6e6e73;
+    color: #4b5563;
     margin-bottom: 4px;
+}
+
+.form-label .material-icons {
+    font-size: 16px;
 }
 
 .form-control {
     width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #d2d2d7;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
     border-radius: 6px;
     font-size: 14px;
-    background: white;
+    background: #ffffff;
+    transition: border-color 0.2s ease;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: #007AFF;
+    border-color: #3B82F6;
 }
 
 .nested-steps {
     margin-left: 12px;
     padding-left: 12px;
-    border-left: 2px solid #e9ecef;
+    border-left: 2px solid #e5e7eb;
     margin-top: 12px;
 }
 
 .nested-step {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     padding: 8px;
     background: #ffffff;
     border-radius: 6px;
-    border: 1px solid #e9ecef;
 }
 
 .nested-title {
@@ -163,9 +204,13 @@
     align-items: center;
     gap: 4px;
     font-size: 12px;
-    font-weight: 500;
-    color: #6e6e73;
+    font-weight: 600;
+    color: #6b7280;
     margin-bottom: 8px;
+}
+
+.nested-title .material-icons {
+    font-size: 16px;
 }
 
 .actions-bar {
@@ -174,13 +219,13 @@
     gap: 8px;
     margin-top: 16px;
     padding: 12px;
-    background: #f8f9fa;
+    background: #f9fafb;
     border-radius: 8px;
 }
 
 .actions-bar .btn {
     padding: 8px 12px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
 }
 
@@ -197,6 +242,13 @@
 .btn-add-loop {
     background: #34C759;
     color: white;
+}
+
+.btn-add-action:hover,
+.btn-add-condition:hover,
+.btn-add-loop:hover,
+.btn-export:hover {
+    opacity: 0.9;
 }
 
 select.form-control {
@@ -230,10 +282,21 @@ input[type="number"].form-control::-webkit-inner-spin-button {
     }
     
     .step-header {
-        padding: 8px 12px;
+        padding: 10px 12px;
     }
     
     .step-content {
-        padding: 0 12px 12px;
+        padding: 0 12px 12px 12px;
+    }
+    
+    .fab {
+        bottom: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .fab .material-icons {
+        font-size: 20px;
     }
 }
