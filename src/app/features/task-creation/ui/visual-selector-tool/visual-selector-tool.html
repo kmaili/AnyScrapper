@@ -1,0 +1,301 @@
+<div class="visual-selector-container">
+    <div class="content">
+        <!-- Process Steps -->
+        <div *ngFor="let step of steps; let i = index" 
+             class="process-step" 
+             [ngClass]="step.type">
+            
+            <div class="step-header" (click)="toggleCollapse(i)">
+                <div class="step-title">
+                    <span class="material-icons step-icon" [ngClass]="step.type">
+                        {{ getIconForStep(step.type) }}
+                    </span>
+                    <span>{{ getStepLabel(step) }}</span>
+                </div>
+                <button (click)="deleteStep(i, $event)" class="btn btn-danger btn-small">
+                    <span class="material-icons">delete</span>
+                </button>
+            </div>
+            
+            <div class="step-content" [class.hidden]="!isExpanded[i]">
+                <div class="form-group">
+                    <label class="form-label">
+                        <span class="material-icons">category</span> Type
+                    </label>
+                    <select [(ngModel)]="step.type" 
+                            class="form-control" 
+                            (ngModelChange)="updateStepType(i, $event)">
+                        <option value="action">Action</option>
+                        <option value="condition">Condition</option>
+                        <option value="loop">Loop</option>
+                    </select>
+                </div>
+
+                <!-- Action Step -->
+                <ng-container *ngIf="step.type === 'action'">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">settings</span> Action Type
+                        </label>
+                        <select [(ngModel)]="step.actionType" 
+                                class="form-control" 
+                                (ngModelChange)="updateActionType(i, $event)">
+                            <option value="page">Page Action</option>
+                            <option value="element">Element Action</option>
+                            <option value="container">Container Action</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">assignment</span> Action Name
+                        </label>
+                        <select [(ngModel)]="step.name" 
+                                class="form-control" 
+                                (ngModelChange)="updateActionName(i, $event)">
+                            <option *ngIf="step.actionType === 'page'" value="scroll_down">Scroll Down</option>
+                            <option *ngIf="step.actionType === 'page'" value="scroll_up">Scroll Up</option>
+                            <option *ngIf="step.actionType === 'page'" value="refresh">Refresh</option>
+                            <option *ngIf="step.actionType === 'page'" value="back">Go Back</option>
+                            <option *ngIf="step.actionType === 'page'" value="forward">Go Forward</option>
+                            <option *ngIf="step.actionType === 'page'" value="visit_link">Visit Link</option>
+                            <option *ngIf="step.actionType === 'element'" value="get_text">Get Text</option>
+                            <option *ngIf="step.actionType === 'element'" value="click">Click</option>
+                            <option *ngIf="step.actionType === 'element'" value="long_click">Long Click</option>
+                            <option *ngIf="step.actionType === 'element'" value="right_click">Right Click</option>
+                            <option *ngIf="step.actionType === 'element'" value="double_click">Double Click</option>
+                            <option *ngIf="step.actionType === 'element'" value="get_attribute">Get Attribute</option>
+                            <option *ngIf="step.actionType === 'element'" value="get_inner_html">Get Inner HTML</option>
+                            <option *ngIf="step.actionType === 'container'" value="sequence">Sequence</option>
+                        </select>
+                    </div>
+
+                    <div *ngIf="step.actionType === 'page' && step.name === 'visit_link'" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">link</span> URL
+                        </label>
+                        <input [(ngModel)]="step.url" 
+                               class="form-control" 
+                               placeholder="https://example.com">
+                    </div>
+
+                    <div *ngIf="step.actionType === 'element'" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">code</span> Selector (CSS)
+                        </label>
+                        <select [(ngModel)]="step.selector" class="form-control">
+                            <option value="">Select</option>
+                            <option *ngFor="let selector of testSelectors" [value]="selector">{{ selector }}</option>
+                        </select>
+                    </div>
+
+                    <div *ngIf="step.actionType === 'element' && step.name === 'get_attribute'" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">label</span> Attribute Name
+                        </label>
+                        <input [(ngModel)]="step.attribute" 
+                               class="form-control" 
+                               placeholder="href, src, class...">
+                    </div>
+
+                    <div *ngIf="step.actionType === 'container' && step.name === 'sequence'" class="nested-steps">
+                        <div class="nested-title">
+                            <span class="material-icons">list</span> Sequence Steps
+                        </div>
+                        <div *ngFor="let nested of step.steps || []; let j = index" class="nested-step">
+                            <app-visual-selector-tool [steps]="[nested]" 
+                                                     (stepsChange)="updateNestedAction(i, j, 'steps', $event)">
+                            </app-visual-selector-tool>
+                            <button (click)="removeNestedStep(i, j, 'steps')" 
+                                    class="btn btn-danger btn-small">
+                                <span class="material-icons">delete</span>
+                            </button>
+                        </div>
+                        <button (click)="addNestedStep(i, 'steps')" 
+                                class="btn btn-primary btn-small">
+                            <span class="material-icons">add</span> Add Action
+                        </button>
+                    </div>
+                </ng-container>
+
+                <!-- Condition Step -->
+                <ng-container *ngIf="step.type === 'condition'">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">rule</span> Condition Type
+                        </label>
+                        <select [(ngModel)]="step.conditionType" class="form-control">
+                            <option value="element_found">Element Found</option>
+                            <option value="element_not_found">Element Not Found</option>
+                            <option value="element_attribute_equals">Element Attribute Equals</option>
+                            <option value="element_attribute_not_equals">Element Attribute Not Equals</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">code</span> Selector (CSS)
+                        </label>
+                        <select [(ngModel)]="step.selector" class="form-control">
+                            <option value="">Select</option>
+                            <option *ngFor="let selector of testSelectors" [value]="selector">{{ selector }}</option>
+                        </select>
+                    </div>
+
+                    <div *ngIf="step.conditionType?.includes('attribute_')" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">label</span> Attribute Name
+                        </label>
+                        <input [(ngModel)]="step.attribute" 
+                               class="form-control" 
+                               placeholder="class, id, data-*...">
+                    </div>
+
+                    <div *ngIf="step.conditionType?.includes('attribute_')" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">text_fields</span> Attribute Value
+                        </label>
+                        <input [(ngModel)]="step.value" 
+                               class="form-control" 
+                               placeholder="Expected value">
+                    </div>
+
+                    <div class="nested-steps">
+                        <div class="nested-title">
+                            <span class="material-icons">check</span> If True
+                        </div>
+                        <div *ngFor="let nested of step.ifTrue || []; let j = index" class="nested-step">
+                            <app-visual-selector-tool [steps]="[nested]" 
+                                                     (stepsChange)="updateNestedAction(i, j, 'ifTrue', $event)">
+                            </app-visual-selector-tool>
+                            <button (click)="removeNestedStep(i, j, 'ifTrue')" 
+                                    class="btn btn-danger btn-small">
+                                <span class="material-icons">delete</span>
+                            </button>
+                        </div>
+                        <button (click)="addNestedStep(i, 'ifTrue')" 
+                                class="btn btn-primary btn-small">
+                            <span class="material-icons">add</span> Add Action
+                        </button>
+                    </div>
+
+                    <div class="nested-steps">
+                        <div class="nested-title">
+                            <span class="material-icons">close</span> If False
+                        </div>
+                        <div *ngFor="let nested of step.ifFalse || []; let j = index" class="nested-step">
+                            <app-visual-selector-tool [steps]="[nested]" 
+                                                     (stepsChange)="updateNestedAction(i, j, 'ifFalse', $event)">
+                            </app-visual-selector-tool>
+                            <button (click)="removeNestedStep(i, j, 'ifFalse')" 
+                                    class="btn btn-danger btn-small">
+                                <span class="material-icons">delete</span>
+                            </button>
+                        </div>
+                        <button (click)="addNestedStep(i, 'ifFalse')" 
+                                class="btn btn-primary btn-small">
+                            <span class="material-icons">add</span> Add Action
+                        </button>
+                    </div>
+                </ng-container>
+
+                <!-- Loop Step -->
+                <ng-container *ngIf="step.type === 'loop'">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">loop</span> Loop Type
+                        </label>
+                        <select [(ngModel)]="step.loopType" 
+                                class="form-control" 
+                                (ngModelChange)="updateLoopType(i, $event)">
+                            <option value="fixed_iterations">Fixed Iterations</option>
+                            <option value="until_condition">Until Condition</option>
+                        </select>
+                    </div>
+
+                    <div *ngIf="step.loopType === 'fixed_iterations'" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">repeat</span> Iterations
+                        </label>
+                        <input [(ngModel)]="step.iterations" 
+                               type="number" 
+                               min="1" 
+                               class="form-control">
+                    </div>
+
+                    <div *ngIf="step.loopType === 'until_condition'" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">rule</span> Stop Condition Type
+                        </label>
+                        <select [(ngModel)]="step.condition!.conditionType" class="form-control">
+                            <option value="element_found">Element Found</option>
+                            <option value="element_not_found">Element Not Found</option>
+                            <option value="element_attribute_equals">Element Attribute Equals</option>
+                            <option value="element_attribute_not_equals">Element Attribute Not Equals</option>
+                        </select>
+                    </div>
+
+                    <div *ngIf="step.loopType === 'until_condition'" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">code</span> Stop Condition Selector
+                        </label>
+                        <select [(ngModel)]="step.condition!.selector" class="form-control">
+                            <option value="">Select</option>
+                            <option *ngFor="let selector of testSelectors" [value]="selector">{{ selector }}</option>
+                        </select>
+                    </div>
+
+                    <div *ngIf="step.loopType === 'until_condition' && step.condition?.conditionType?.includes('attribute_')" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">label</span> Stop Condition Attribute Name
+                        </label>
+                        <input [(ngModel)]="step.condition!.attribute" 
+                               class="form-control" 
+                               placeholder="class, id, data-*...">
+                    </div>
+
+                    <div *ngIf="step.loopType === 'until_condition' && step.condition?.conditionType?.includes('attribute_')" class="form-group">
+                        <label class="form-label">
+                            <span class="material-icons">text_fields</span> Stop Condition Attribute Value
+                        </label>
+                        <input [(ngModel)]="step.condition!.value" 
+                               class="form-control" 
+                               placeholder="Expected value">
+                    </div>
+
+                    <div class="nested-steps">
+                        <div class="nested-title">
+                            <span class="material-icons">list</span> Loop Steps
+                        </div>
+                        <div *ngFor="let nested of step.steps || []; let j = index" class="nested-step">
+                            <app-visual-selector-tool [steps]="[nested]" 
+                                                     (stepsChange)="updateNestedAction(i, j, 'steps', $event)">
+                            </app-visual-selector-tool>
+                            <button (click)="removeNestedStep(i, j, 'steps')" 
+                                    class="btn btn-danger btn-small">
+                                <span class="material-icons">delete</span>
+                            </button>
+                        </div>
+                        <button (click)="addNestedStep(i, 'steps')" 
+                                class="btn btn-primary btn-small">
+                            <span class="material-icons">add</span> Add Action
+                        </button>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="actions-bar">
+            <button (click)="addStep('action')" class="btn btn-add-action">
+                <span class="material-icons">add_circle</span> Action
+            </button>
+            <button (click)="addStep('condition')" class="btn btn-add-condition">
+                <span class="material-icons">rule</span> Condition
+            </button>
+            <button (click)="addStep('loop')" class="btn btn-add-loop">
+                <span class="material-icons">loop</span> Loop
+            </button>
+        </div>
+    </div>
+</div>

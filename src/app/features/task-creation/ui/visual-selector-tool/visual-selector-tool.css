@@ -1,0 +1,239 @@
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+.visual-selector-container {
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+.content {
+    padding: 16px;
+}
+
+.process-step {
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.process-step::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+}
+
+.process-step.action::before {
+    background: #007AFF;
+}
+
+.process-step.condition::before {
+    background: #FF3B30;
+}
+
+.process-step.loop::before {
+    background: #34C759;
+}
+
+.step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+}
+
+.step-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d1d1f;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.step-icon {
+    font-size: 18px;
+}
+
+.step-icon.action {
+    color: #007AFF;
+}
+
+.step-icon.condition {
+    color: #FF3B30;
+}
+
+.step-icon.loop {
+    color: #34C759;
+}
+
+.btn {
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-small {
+    padding: 4px 8px;
+}
+
+.btn-danger {
+    background: #FF3B30;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #D70015;
+}
+
+.btn-primary {
+    background: #007AFF;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056CC;
+}
+
+.step-content {
+    padding: 0 16px 16px;
+}
+
+.step-content.hidden {
+    display: none一会儿
+}
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6e6e73;
+    margin-bottom: 4px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #d2d2d7;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #007AFF;
+}
+
+.nested-steps {
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left: 2px solid #e9ecef;
+    margin-top: 12px;
+}
+
+.nested-step {
+    margin-bottom: 6px;
+    padding: 8px;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.nested-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6e6e73;
+    margin-bottom: 8px;
+}
+
+.actions-bar {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.actions-bar .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.btn-add-action {
+    background: #007AFF;
+    color: white;
+}
+
+.btn-add-condition {
+    background: #FF3B30;
+    color: white;
+}
+
+.btn-add-loop {
+    background: #34C759;
+    color: white;
+}
+
+select.form-control {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 14px;
+    padding-right: 32px;
+}
+
+input[type="number"].form-control {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+input[type="number"].form-control::-webkit-outer-spin-button,
+input[type="number"].form-control::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .visual-selector-container {
+        margin: 0;
+        border-radius: 0;
+    }
+    
+    .content {
+        padding: 12px;
+    }
+    
+    .step-header {
+        padding: 8px 12px;
+    }
+    
+    .step-content {
+        padding: 0 12px 12px;
+    }
+}

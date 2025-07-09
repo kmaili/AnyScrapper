@@ -1,0 +1,12 @@
+<div class="url-input-container">
+  <h3 class="section-title">Enter Website URL</h3>
+  <p class="section-subtitle">Paste the URL of the webpage you want to scrape.</p>
+  <div class="input-group">
+    <input type="text" [(ngModel)]="url" placeholder="https://example.com" class="url-input" (keyup.enter)="submitUrl()">
+    <button class="action-btn primary" [disabled]="!url || isLoading" (click)="submitUrl()">
+      <span *ngIf="isLoading" class="spinner"></span>
+      <span *ngIf="!isLoading">Continue</span>
+    </button>
+  </div>
+  <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+</div>

@@ -1,0 +1,16 @@
+<div class="task-list-container container py-5">
+  <div class="header">
+    <h2 class="page-title">Your Scraping Tasks</h2>
+    <a routerLink="/task-creation/new" class="action-btn primary">Create New Task</a>
+  </div>
+  <div *ngIf="tasks.length === 0" class="empty-state">
+    <h3 class="empty-title">No Tasks Yet</h3>
+    <p class="empty-subtitle">Get started by creating your first scraping task.</p>
+    <a routerLink="/task-creation/new" class="action-btn primary">Start Now</a>
+  </div>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <div *ngFor="let task of tasks" class="col">
+      <app-task-card [task]="task" (editTask)="onEditTask($event)" (deleteTask)="onDeleteTask($event)" (viewResults)="onViewResults($event)"></app-task-card>
+    </div>
+  </div>
+</div>

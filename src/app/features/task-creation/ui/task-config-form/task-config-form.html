@@ -1,0 +1,39 @@
+<div class="task-config-container">
+  <h3 class="section-title">Configure Your Task</h3>
+  <p class="section-subtitle">Set up the task details and preferences.</p>
+  <form (ngSubmit)="submitTask()" class="config-form">
+    <div class="form-group">
+      <label for="taskName" class="form-label">Task Name</label>
+      <input id="taskName" [(ngModel)]="task.name" name="taskName" placeholder="e.g., Product Prices" class="form-input" required>
+    </div>
+    <div class="form-group">
+      <label for="schedule" class="form-label">Schedule</label>
+      <select id="schedule" [(ngModel)]="task.schedule" name="schedule" class="form-input" required>
+        <option value="" disabled>Select Schedule</option>
+        <option value="Daily">Daily</option>
+        <option value="Weekly">Weekly</option>
+        <option value="Monthly">Monthly</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="exportFormat" class="form-label">Export Format</label>
+      <select id="exportFormat" [(ngModel)]="task.exportFormat" name="exportFormat" class="form-input" required>
+        <option value="" disabled>Select Format</option>
+        <option value="CSV">CSV</option>
+        <option value="Excel">Excel</option>
+        <option value="Google Sheets">Google Sheets</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Selected Fields</label>
+      <div *ngFor="let field of selectedFields; let i = index" class="field-item">
+        <input [(ngModel)]="field.name" [name]="'field-' + i" placeholder="Field Name" class="form-input field-input" required>
+      </div>
+    </div>
+    <div class="form-actions">
+    <button type="button" class="action-btn secondary" (click)="cancelTask()">Cancel</button>
+    <button type="submit" class="action-btn primary" [disabled]="!isFormValid()">Create Task</button>
+    </div>
+
+  </form>
+</div>

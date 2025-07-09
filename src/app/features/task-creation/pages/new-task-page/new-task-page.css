@@ -1,0 +1,99 @@
+.new-task-container {
+  margin: 0 auto;
+  padding: 2.5rem 1rem;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.page-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Roboto, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #000000;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.action-btn {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.6rem 1.5rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.action-btn.secondary {
+  background: rgba(0, 0, 0, 0.05);
+  color: #3a3a3c;
+}
+
+.action-btn.secondary:hover {
+  background: rgba(0, 0, 0, 0.1);
+  transform: scale(1.03);
+}
+
+.step-container {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 2rem;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #3a3a3c;
+}
+
+.step-number {
+  width: 24px;
+  height: 24px;
+  background: #d2d2d7;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.step.active .step-number {
+  background: #007aff;
+}
+
+.step.completed .step-number {
+  background: #34c759;
+}
+
+.step-divider {
+  flex: 1;
+  height: 2px;
+  background: #d2d2d7;
+  margin: 0 1rem;
+}
+
+.step-content {
+  min-height: 400px;
+}
