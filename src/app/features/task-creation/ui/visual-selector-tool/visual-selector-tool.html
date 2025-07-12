@@ -93,10 +93,10 @@
                         <label class="form-label">
                             <span class="material-icons">find_in_page</span> Selector (CSS)
                         </label>
-                        <select [(ngModel)]="step.selector" class="form-control">
-                            <option value="">Select</option>
-                            <option *ngFor="let selector of testSelectors" [value]="selector">{{ selector }}</option>
-                        </select>
+                        <app-autocomplete-selector 
+                            [(selectedSelector)]="step.selector" 
+                            [domElements]="domElements">
+                        </app-autocomplete-selector>
                     </div>
 
                     <div *ngIf="step.actionType === 'element' && step.name === 'get_attribute'" class="form-group">
@@ -144,10 +144,10 @@
                         <label class="form-label">
                             <span class="material-icons">find_in_page</span> Selector (CSS)
                         </label>
-                        <select [(ngModel)]="step.selector" class="form-control">
-                            <option value="">Select</option>
-                            <option *ngFor="let selector of testSelectors" [value]="selector">{{ selector }}</option>
-                        </select>
+                        <app-autocomplete-selector 
+                            [(selectedSelector)]="step.selector" 
+                            [domElements]="domElements">
+                        </app-autocomplete-selector>
                     </div>
 
                     <div *ngIf="step.conditionType?.includes('attribute_')" class="form-group">
@@ -243,10 +243,10 @@
                         <label class="form-label">
                             <span class="material-icons">find_in_page</span> Stop Condition Selector
                         </label>
-                        <select [(ngModel)]="step.condition!.selector" class="form-control">
-                            <option value="">Select</option>
-                            <option *ngFor="let selector of testSelectors" [value]="selector">{{ selector }}</option>
-                        </select>
+                        <app-autocomplete-selector 
+                            [(selectedSelector)]="step.condition!.selector" 
+                            [domElements]="domElements">
+                        </app-autocomplete-selector>
                     </div>
 
                     <div *ngIf="step.loopType === 'until_condition' && step.condition?.conditionType?.includes('attribute_')" class="form-group">

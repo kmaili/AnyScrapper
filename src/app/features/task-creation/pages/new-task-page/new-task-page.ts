@@ -1,45 +1,52 @@
-// new-task-page.ts (corrigé)
-
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-// Retirer RouterLink si non utilisé dans template
+import { RouterLink } from '@angular/router';
 import { UrlInputFormComponent } from '../../ui/url-input-form/url-input-form';
 import { VisualSelectorToolComponent } from '../../ui/visual-selector-tool/visual-selector-tool';
 import { TaskConfigFormComponent } from '../../ui/task-config-form/task-config-form';
 
+interface Field {
+  name: string;
+  selector: string;
+  visualPosition: string;
+}
+
 @Component({
   selector: 'app-new-task-page',
   standalone: true,
-  imports: [CommonModule, UrlInputFormComponent, VisualSelectorToolComponent, TaskConfigFormComponent],
+  imports: [CommonModule, RouterLink, UrlInputFormComponent, VisualSelectorToolComponent, TaskConfigFormComponent],
   templateUrl: './new-task-page.html',
   styleUrls: ['./new-task-page.css']
 })
-export class NewTaskPageComponent {
+export class NewTaskPageComponent implements OnInit {
   currentStep: number = 1;
-  submittedUrl: string = '';
+  selectedUrl: string = '';
+  selectedFields: Field[] = [];
+  
+  // Transform selectedFields to match the expected type for app-task-config-form
+  get transformedSelectedFields(): { name: string; position: string }[] {
+    return this.selectedFields.map(field => ({
+      name: field.name,
+      position: field.visualPosition
+    }));
+  }
 
-  // Adapter le type pour correspondre à ce que TaskConfigFormComponent attend (position au lieu de visualPosition)
-  selectedFields: { name: string; position: string }[] = [];
+  ngOnInit() {
+    // Initialize component state if needed
+  }
 
-  onUrlSubmitted(url: string): void {
-    this.submittedUrl = url;
+  onUrlSubmitted(url: string) {
+    this.selectedUrl = url;
     this.currentStep = 2;
   }
 
-  onFieldsSelected(fields: { name: string; selector: string; visualPosition: string }[]): void {
-    // Transformer en {name, position}
-    this.selectedFields = fields.map(f => ({
-      name: f.name,
-      position: f.visualPosition
-    }));
+  onFieldsSelected(fields: Field[]) {
+    this.selectedFields = fields;
     this.currentStep = 3;
   }
 
-  onTaskSubmitted(task: any): void {
+  onTaskSubmitted(task: any) {
+    // Handle task submission
     console.log('Task submitted:', task);
-  }
-
-  cancel(): void {
-    console.log('Task creation cancelled');
   }
 }

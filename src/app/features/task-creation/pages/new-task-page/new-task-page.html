@@ -1,7 +1,7 @@
 <div class="new-task-container container py-5">
   <div class="header">
     <h2 class="page-title">Create New Scraping Task</h2>
-    <button class="action-btn secondary" (click)="cancel()">Cancel</button>
+    <button class="action-btn secondary">Cancel</button>
   </div>
   <div class="step-container">
     <div class="step-header">
@@ -28,8 +28,8 @@
         <app-visual-selector-tool (fieldsSelected)="onFieldsSelected($any($event))"></app-visual-selector-tool>
       </div>
       <div *ngIf="currentStep === 3" class="step-section">
-        <app-task-config-form [selectedFields]="selectedFields" (taskSubmitted)="onTaskSubmitted($event)"></app-task-config-form>
-      </div>
+      <app-task-config-form [selectedFields]="transformedSelectedFields" (taskSubmitted)="onTaskSubmitted($event)"></app-task-config-form>
+    </div>
     </div>
   </div>
 </div>

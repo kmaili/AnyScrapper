@@ -2,11 +2,13 @@
 import { Routes } from '@angular/router';
 import { TaskListPageComponent } from './pages/task-list-page/task-list-page';
 import { TaskDetailsPageComponent } from './pages/task-details-page/task-details-page';
+import { authGuard } from '../../core/auth/auth-guard';
 
 export const TASK_MANAGEMENT_ROUTES: Routes = [
   {
     path: '', // Cette route correspondra à '/tasks' car elle est chargée paresseusement à cet endroit dans app.routes.ts
-    component: TaskListPageComponent // Le composant de la liste des tâches sera affiché par défaut
+    component: TaskListPageComponent, // Le composant de la liste des tâches sera affiché par défaut
+    canActivate: [authGuard] // Protège cette route avec l'authentification
   },
   {
     path: ':id', // Route pour voir les détails d'une tâche spécifique, ex: /tasks/123

@@ -1,13 +1,18 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { DomElementsSelectorWsService } from '../../data-access/dom-elements-selector/dom-elemnts-selector.service';
+import { DomElement } from '../../models/dom-element.model'; // Adjust the import path as needed
+import { AutocompleteSelectorComponent } from '../autocomplete-selector/autocomplete-selector';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 interface Action {
   type: 'action';
   actionType?: 'page' | 'element' | 'container';
   name?: string;
   url?: string;
-  selector?: string;
+  selector: string;
   attribute?: string;
   steps?: Action[];
   tag?: string;
@@ -16,7 +21,7 @@ interface Action {
 interface Condition {
   type: 'condition';
   conditionType?: 'element_found' | 'element_not_found' | 'element_attribute_equals' | 'element_attribute_not_equals';
-  selector?: string;
+  selector: string;
   attribute?: string;
   value?: string;
   ifTrue: Action[];
@@ -28,7 +33,7 @@ interface Loop {
   type: 'loop';
   loopType?: 'fixed_iterations' | 'until_condition';
   iterations?: number;
-  condition?: { conditionType?: string; selector?: string; attribute?: string; value?: string };
+  condition?: { conditionType?: string; selector: string; attribute?: string; value?: string };
   steps: Action[];
   tag?: string;
 }
@@ -38,29 +43,94 @@ type Step = Action | Condition | Loop;
 @Component({
   selector: 'app-visual-selector-tool',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AutocompleteSelectorComponent],
   templateUrl: './visual-selector-tool.html',
   styleUrls: ['./visual-selector-tool.css']
 })
-export class VisualSelectorToolComponent implements OnInit {
+export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   @Input() steps: Step[] = [];
   @Output() stepsChange = new EventEmitter<Step[]>();
-  testSelectors = [
-    '#main-content', '.product-title', 'a.nav-link', 'div.item-card', 'p.description',
-    'h1', 'h2', 'button.submit-btn', 'input[type="text"]', 'span.price', 'img', 'body', 'html'
-  ];
-  isExpanded: { [key: number]: boolean } = {};
+  domElements: DomElement[] = [];
+  private wsSubscription!: Subscription;
+
+  constructor(private wsService: DomElementsSelectorWsService) {}
 
   ngOnInit() {
-    if (!this.steps.length) this.steps = [{ type: 'action', actionType: 'page', name: 'scroll_down', tag: '' }];
+    if (!this.steps.length) {
+      this.steps = [{ type: 'action', actionType: 'page', name: 'scroll_down', tag: '', selector: '' }];
+    }
     this.steps.forEach((_, i) => this.isExpanded[i] = true);
+
+    // Connect to WebSocket (replace with your WebSocket URL)
+    this.wsService.connect('ws://localhost:8000/ws/dom-elements/', 'http://localhost:8000/api/dom-elements/');
+
+    // Subscribe to DOM elements from WebSocket
+    this.wsSubscription = this.wsService.domElements$.subscribe(elements => {
+      this.domElements = elements;
+      // Ensure selector is set for existing steps if needed
+      this.steps.forEach((step, index) => {
+        if (step.type === 'condition' && !step.selector) {
+          step.selector = this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '';
+          this.emitChanges();
+        } else if (step.type === 'loop' && step.loopType === 'until_condition' && step.condition && !step.condition.selector) {
+          step.condition.selector = this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '';
+          this.emitChanges();
+        } else if (step.type === 'action' && step.actionType === 'element' && !step.selector) {
+          step.selector = this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '';
+          this.emitChanges();
+        }
+      });
+    });
   }
+
+  ngOnDestroy() {
+    this.wsSubscription.unsubscribe();
+    this.wsService.disconnect();
+  }
+
+  private mapDomElementToSelector(element: DomElement): string {
+    // Prioritize ID attributes for concise selectors
+    const idAttr = element.attributes.find(attr => attr.name === 'id');
+    if (idAttr) {
+      return `#${idAttr.name}`;
+    }
+    // Fallback to class attributes
+    const classAttr = element.attributes.find(attr => attr.name === 'class');
+    if (classAttr) {
+      return `.${classAttr.name.replace(/\s+/g, '.')}`;
+    }
+    // Fallback to tag name with XPath as a pseudo-selector
+    return `${element.tag_name}[data-xpath="${element.x_path}"]`;
+  }
+
+  isExpanded: { [key: number]: boolean } = {};
 
   addStep(type: 'action' | 'condition' | 'loop') {
     let newStep: Step;
-    if (type === 'action') newStep = { type: 'action', actionType: 'page', name: 'scroll_down', tag: '' };
-    else if (type === 'condition') newStep = { type: 'condition', conditionType: 'element_found', selector: this.testSelectors[0], ifTrue: [], ifFalse: [], tag: '' };
-    else newStep = { type: 'loop', loopType: 'fixed_iterations', iterations: 1, steps: [], condition: { conditionType: 'element_found', selector: this.testSelectors[0] }, tag: '' };
+    if (type === 'action') {
+      newStep = { type: 'action', actionType: 'page', name: 'scroll_down', tag: '', selector: '' };
+    } else if (type === 'condition') {
+      newStep = { 
+        type: 'condition', 
+        conditionType: 'element_found', 
+        selector: this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '', 
+        ifTrue: [], 
+        ifFalse: [], 
+        tag: '' 
+      };
+    } else {
+      newStep = { 
+        type: 'loop', 
+        loopType: 'fixed_iterations', 
+        iterations: 1, 
+        steps: [], 
+        condition: { 
+          conditionType: 'element_found', 
+          selector: this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '' 
+        }, 
+        tag: '' 
+      };
+    }
     this.steps.push(newStep);
     this.isExpanded[this.steps.length - 1] = true;
     this.emitChanges();
@@ -77,10 +147,10 @@ export class VisualSelectorToolComponent implements OnInit {
     const step = this.steps[index];
     if (step.type === 'condition' && (branch === 'ifTrue' || branch === 'ifFalse')) {
       if (!step[branch].length) step[branch] = [];
-      step[branch].push({ type: 'action', actionType: 'page', name: 'scroll_down', tag: '' });
+      step[branch].push({ type: 'action', actionType: 'page', name: 'scroll_down', tag: '', selector: '' });
     } else if ((step.type === 'loop' || (step.type === 'action' && (step as Action).name === 'sequence')) && branch === 'steps') {
       if (!step.steps) step.steps = [];
-      step.steps.push({ type: 'action', actionType: 'page', name: 'scroll_down', tag: '' });
+      step.steps.push({ type: 'action', actionType: 'page', name: 'scroll_down', tag: '', selector: '' });
     }
     this.emitChanges();
   }
@@ -98,9 +168,30 @@ export class VisualSelectorToolComponent implements OnInit {
   updateStepType(index: number, type: string) {
     const step = this.steps[index];
     let newStep: Step;
-    if (type === 'action') newStep = { type: 'action', actionType: 'page', name: 'scroll_down', tag: step.tag || '' };
-    else if (type === 'condition') newStep = { type: 'condition', conditionType: 'element_found', selector: this.testSelectors[0], ifTrue: [], ifFalse: [], tag: step.tag || '' };
-    else newStep = { type: 'loop', loopType: 'fixed_iterations', iterations: 1, steps: [], condition: { conditionType: 'element_found', selector: this.testSelectors[0] }, tag: step.tag || '' };
+    if (type === 'action') {
+      newStep = { type: 'action', actionType: 'page', name: 'scroll_down', tag: step.tag || '', selector: '' };
+    } else if (type === 'condition') {
+      newStep = { 
+        type: 'condition', 
+        conditionType: 'element_found', 
+        selector: this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '', 
+        ifTrue: [], 
+        ifFalse: [], 
+        tag: step.tag || '' 
+      };
+    } else {
+      newStep = { 
+        type: 'loop', 
+        loopType: 'fixed_iterations', 
+        iterations: 1, 
+        steps: [], 
+        condition: { 
+          conditionType: 'element_found', 
+          selector: this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '' 
+        }, 
+        tag: step.tag || '' 
+      };
+    }
     this.steps[index] = newStep;
     this.emitChanges();
   }
@@ -110,20 +201,20 @@ export class VisualSelectorToolComponent implements OnInit {
     step.actionType = actionType;
     if (actionType === 'page') {
       step.name = 'scroll_down';
-      delete step.selector;
+      step.selector = '';
       delete step.attribute;
       delete step.steps;
       delete step.url;
     } else if (actionType === 'element') {
       step.name = 'get_text';
-      step.selector = this.testSelectors[0];
+      step.selector = this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '';
       delete step.attribute;
       delete step.steps;
       delete step.url;
     } else if (actionType === 'container') {
       step.name = 'sequence';
       step.steps = step.steps || [];
-      delete step.selector;
+      step.selector = '';
       delete step.attribute;
       delete step.url;
     }
@@ -133,8 +224,11 @@ export class VisualSelectorToolComponent implements OnInit {
   updateActionName(index: number, name: string) {
     const step = this.steps[index] as Action;
     step.name = name;
-    if (name === 'visit_link') step.url = step.url || '';
-    else delete step.url;
+    if (name === 'visit_link') {
+      step.url = step.url || '';
+    } else {
+      delete step.url;
+    }
     this.emitChanges();
   }
 
@@ -145,8 +239,10 @@ export class VisualSelectorToolComponent implements OnInit {
       delete step.condition;
       step.iterations = step.iterations || 1;
     } else {
-      delete step.iterations;
-      step.condition = step.condition || { conditionType: 'element_found', selector: this.testSelectors[0] };
+      step.condition = step.condition || { 
+        conditionType: 'element_found', 
+        selector: this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '' 
+      };
     }
     this.emitChanges();
   }

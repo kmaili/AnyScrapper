@@ -1,0 +1,50 @@
+<div class="autocomplete-container">
+  <div class="input-wrapper">
+    <span class="material-icons prefix-icon">search</span>
+    <input
+      #input
+      class="autocomplete-input"
+      [(ngModel)]="searchQuery"
+      (ngModelChange)="filterElements()"
+      (focus)="showList = true"
+      (blur)="onBlur()"
+      (keydown)="onKeydown($event)"
+      placeholder="Find an element..."
+      autocomplete="off"
+      spellcheck="false"
+      aria-autocomplete="list"
+      aria-controls="results-panel"
+      role="combobox"
+      [attr.aria-expanded]="showList"
+    />
+    <button *ngIf="searchQuery" class="clear-button">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+
+  <div
+    id="results-panel"
+    class="results-panel"
+    *ngIf="showList && filteredElements.length"
+    role="listbox"
+    tabindex="-1"
+  >
+    <div
+      *ngFor="let element of filteredElements; let i = index"
+      class="result-item"
+      [class.active]="i === selectedIndex"
+      (mousedown)="selectElement(element)"
+      (mouseover)="selectedIndex = i"
+      role="option"
+      [attr.aria-selected]="i === selectedIndex"
+    >
+      <span class="material-icons result-icon">{{ getIconForTag(element.tag_name) }}</span>
+      <span class="tag-label">{{ element.tag_name | uppercase }}</span>
+      <span class="material-icons arrow-icon">arrow_forward_ios</span>
+    </div>
+  </div>
+
+  <div class="no-results" *ngIf="showList && !filteredElements.length">
+    No matching elements found.
+  </div>
+</div>

@@ -4,7 +4,7 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '', // Lorsque l'URL est '/tasks', cette fonctionnalité sera chargée paresseusement
-    loadChildren: () => import('./features/task-management/task-management.routes').then(m => m.TASK_MANAGEMENT_ROUTES)
+    loadChildren: () => import('./features/task-management/task-management.routes').then(m => m.TASK_MANAGEMENT_ROUTES),
   },
   {
     path: 'task-creation',
