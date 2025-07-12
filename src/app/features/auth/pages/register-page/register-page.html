@@ -12,10 +12,10 @@
       <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
       <button type="submit" class="submit-button">Sign Up</button>
     </form>
-    <div class="divider">or</div>
+    <div class="divider"></div>
     <button (click)="onGoogleLogin()" class="google-button">
       <span class="google-icon"></span> Continue with Google
     </button>
-    <p class="login-link">Already have an account? <a routerLink="/login">Log in</a></p>
+    <p class="login-link">Already have an account? <a routerLink="/auth/login">Log in</a></p>
   </div>
 </div>

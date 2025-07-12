@@ -1,27 +1,39 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-login-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login-page.html',
   styleUrls: ['./login-page.css']
 })
 export class LoginPageComponent {
-  email: string = '';
+  username: string = '';
   password: string = '';
   errorMessage: string = '';
 
+  constructor(private authService: AuthService, private router: ActivatedRoute, private messageService: MessageService) { }
   onSubmit() {
-    if (!this.email || !this.password) {
+    if (!this.username || !this.password) {
       this.errorMessage = 'Please fill in all fields.';
       return;
     }
-    // Placeholder for login logic (e.g., API call)
-    console.log('Login attempt:', { email: this.email, password: this.password });
-    this.errorMessage = 'Login successful!'; // Replace with actual API response
+    this.authService.login({ username: this.username, password: this.password }).subscribe({
+      next: () => {
+        this.errorMessage = '';
+        this.messageService.add({ severity: 'success', summary: 'Login Successful', detail: 'Welcome back!' });
+      },
+      error: (error) => {
+        console.error('Login failed', error);
+        this.errorMessage = 'Invalid email or password.';
+      }
+    });
+    
   }
 
   // Placeholder for Google OAuth login

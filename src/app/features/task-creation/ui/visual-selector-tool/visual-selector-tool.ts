@@ -2,43 +2,15 @@ import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angu
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { DomElementsSelectorWsService } from '../../data-access/dom-elements-selector/dom-elemnts-selector.service';
+import { DomElementsSelectorWsService } from '../../data-access/dom-elements-selector/real-time-dom-elemnts-selector.service';
 import { DomElement } from '../../models/dom-element.model'; // Adjust the import path as needed
 import { AutocompleteSelectorComponent } from '../autocomplete-selector/autocomplete-selector';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Action } from '../../models/action.model';
+import { Condition } from '../../models/condition.model';
+import { Loop } from '../../models/loop.model';
+import { Step } from '../../models/step.model';
 
-interface Action {
-  type: 'action';
-  actionType?: 'page' | 'element' | 'container';
-  name?: string;
-  url?: string;
-  selector: string;
-  attribute?: string;
-  steps?: Action[];
-  tag?: string;
-}
-
-interface Condition {
-  type: 'condition';
-  conditionType?: 'element_found' | 'element_not_found' | 'element_attribute_equals' | 'element_attribute_not_equals';
-  selector: string;
-  attribute?: string;
-  value?: string;
-  ifTrue: Action[];
-  ifFalse: Action[];
-  tag?: string;
-}
-
-interface Loop {
-  type: 'loop';
-  loopType?: 'fixed_iterations' | 'until_condition';
-  iterations?: number;
-  condition?: { conditionType?: string; selector: string; attribute?: string; value?: string };
-  steps: Action[];
-  tag?: string;
-}
-
-type Step = Action | Condition | Loop;
 
 @Component({
   selector: 'app-visual-selector-tool',

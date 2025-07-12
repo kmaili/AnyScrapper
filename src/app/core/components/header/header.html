@@ -1,0 +1,28 @@
+<!-- src/app/components/header/header.component.html -->
+<header class="app-header">
+  <div class="header-content">
+    <div class="logo-section">
+      <h1 class="app-title">Any Scraper</h1>
+    </div>
+    <button class="menu-toggle" (click)="toggleMenu()" *ngIf="isMobile" [attr.aria-expanded]="isMenuOpen">
+      <span class="menu-icon"></span>
+    </button>
+    <nav class="nav-links" [class.mobile-menu]="isMobile" [@menuAnimation]="isMenuOpen ? 'open' : 'closed'">
+      <ng-container *ngIf="isLoggedIn$ | async as isLoggedIn">
+        <a routerLink="/dashboard" class="nav-button" (click)="isMenuOpen = false">Dashboard</a>
+        <button class="nav-button" (click)="authService.logout(); isMenuOpen = false">Logout</button>
+        <div class="profile-dropdown">
+          <button class="profile-button" (click)="toggleProfile()">Profile</button>
+          <div class="dropdown-menu" *ngIf="isProfileOpen"> <!-- Use isProfileOpen -->
+            <a routerLink="/profile" class="dropdown-item">View Profile</a>
+            <a routerLink="/settings" class="dropdown-item">Settings</a>
+          </div>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="!(isLoggedIn$ | async)">
+        <a routerLink="/auth/login" class="nav-button" (click)="isMenuOpen = false">Login</a>
+        <a routerLink="/auth/register" class="nav-button" (click)="isMenuOpen = false">Register</a>
+      </ng-container>
+    </nav>
+  </div>
+</header>

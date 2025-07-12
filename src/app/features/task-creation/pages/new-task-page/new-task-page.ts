@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterModule } from '@angular/router';
 import { UrlInputFormComponent } from '../../ui/url-input-form/url-input-form';
 import { VisualSelectorToolComponent } from '../../ui/visual-selector-tool/visual-selector-tool';
 import { TaskConfigFormComponent } from '../../ui/task-config-form/task-config-form';
@@ -14,7 +14,7 @@ interface Field {
 @Component({
   selector: 'app-new-task-page',
   standalone: true,
-  imports: [CommonModule, RouterLink, UrlInputFormComponent, VisualSelectorToolComponent, TaskConfigFormComponent],
+  imports: [CommonModule, UrlInputFormComponent, VisualSelectorToolComponent, TaskConfigFormComponent, RouterModule],
   templateUrl: './new-task-page.html',
   styleUrls: ['./new-task-page.css']
 })
