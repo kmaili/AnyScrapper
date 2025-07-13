@@ -10,7 +10,7 @@ import { CookieService } from 'ngx-cookie-service';
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiUrl = 'http://localhost:8000/api'; // Adjust to your DRF API URL
+  private readonly apiUrl = 'http://localhost:8000/auth'; // Adjust to your DRF API URL
   private isLoggedInSubject = new BehaviorSubject<boolean>(this.hasToken());
   public isLoggedIn$: Observable<boolean> = this.isLoggedInSubject.asObservable();
 

@@ -25,7 +25,7 @@
         <app-url-input-form (urlSubmitted)="onUrlSubmitted($event)"></app-url-input-form>
       </div>
       <div *ngIf="currentStep === 2" class="step-section">
-        <app-visual-selector-tool (fieldsSelected)="onFieldsSelected($any($event))"></app-visual-selector-tool>
+        <app-visual-selector-tool (workflowCompleted)="onWorkflowCompleted($event)"></app-visual-selector-tool>
       </div>
       <div *ngIf="currentStep === 3" class="step-section">
       <app-task-config-form [selectedFields]="transformedSelectedFields" (taskSubmitted)="onTaskSubmitted($event)"></app-task-config-form>

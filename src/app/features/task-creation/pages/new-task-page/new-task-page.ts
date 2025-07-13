@@ -40,9 +40,10 @@ export class NewTaskPageComponent implements OnInit {
     this.currentStep = 2;
   }
 
-  onFieldsSelected(fields: Field[]) {
-    this.selectedFields = fields;
-    this.currentStep = 3;
+  onWorkflowCompleted(event: boolean) {
+    if (event) {
+      this.currentStep = 3;
+    }
   }
 
   onTaskSubmitted(task: any) {
