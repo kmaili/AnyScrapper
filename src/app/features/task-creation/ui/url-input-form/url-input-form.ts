@@ -1,7 +1,10 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../../../core/auth/auth.service';
 
+
+declare const chrome: any;
 @Component({
   selector: 'app-url-input-form',
   standalone: true,
@@ -15,6 +18,10 @@ export class UrlInputFormComponent {
   errorMessage: string = '';
   @Output() urlSubmitted = new EventEmitter<string>();
 
+
+  constructor(private authService: AuthService) {}
+
+
   submitUrl(): void {
     if (!this.url || !this.isValidUrl(this.url)) {
       this.errorMessage = 'Please enter a valid URL';
@@ -26,6 +33,18 @@ export class UrlInputFormComponent {
       this.isLoading = false;
       this.errorMessage = '';
       this.urlSubmitted.emit(this.url);
+      chrome.runtime.sendMessage(
+        'omidbmajajpjiajacaipnbddgcbkiaek',  // Extension ID
+        { jwt: this.authService.getToken(), url: this.url },
+        (response: any) => {
+          if (chrome.runtime.lastError) {
+            console.error('Error sending message to extension:', chrome.runtime.lastError.message);
+          } else {
+            console.log('Extension responded:', response);
+          }
+        }
+      );
+
     }, 1000);
   }
 

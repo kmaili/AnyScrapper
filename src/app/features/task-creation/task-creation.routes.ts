@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { NewTaskPageComponent } from './pages/new-task-page/new-task-page';
+import { NewTaskPageComponent } from './pages/new-task-page/new-workflow-page';
 
 export const TASK_CREATION_ROUTES: Routes = [
   {

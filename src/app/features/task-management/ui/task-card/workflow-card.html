@@ -1,0 +1,13 @@
+<div class="workflow-card">
+  <div class="workflow-card-content">
+    <div class="workflow-title">{{ workflow.name }}</div>
+    <div class="workflow-url">
+      <span>URL:</span>
+      <a [href]="workflow.startUrl" target="_blank">{{ workflow.startUrl }}</a>
+    </div>
+    <div class="workflow-actions">
+      <button class="button small primary">Edit</button>
+      <button class="button small danger">Delete</button>
+    </div>
+  </div>
+</div>

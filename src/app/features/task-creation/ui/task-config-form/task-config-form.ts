@@ -1,35 +1,35 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Step } from '../../models/step.model';
+import { NgxJsonViewerModule } from 'ngx-json-viewer';
+import { WorkflowService } from '../../data-access/workflow/workflow.service';
+import { Workflow } from '../../models/workflow.model';
+import { MessageService } from 'primeng/api';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-task-config-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgxJsonViewerModule],
   templateUrl: './task-config-form.html',
   styleUrls: ['./task-config-form.css']
 })
 export class TaskConfigFormComponent {
-  @Input() selectedFields: { name: string; position: string }[] = [];
-  @Output() taskSubmitted = new EventEmitter<any>();
+  @Input() workflow: Workflow = {
+    name: '',
+    startUrl: '',
+    steps: []
+  };
+  @Output() workflowSubmitted = new EventEmitter<Workflow>();
   @Output() cancel = new EventEmitter<void>();
   task = {
     name: '',
     schedule: '',
     exportFormat: ''
   };
-
-  isFormValid(): boolean {
-    return !!this.task.name && !!this.task.schedule && !!this.task.exportFormat && this.selectedFields.every(field => !!field.name);
-  }
-
   submitTask(): void {
-    if (this.isFormValid()) {
-      this.taskSubmitted.emit({
-        ...this.task,
-        fields: this.selectedFields
-      });
-    }
+    this.workflowSubmitted.emit(this.workflow);
   }
 
   cancelTask(): void {

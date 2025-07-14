@@ -1,16 +1,17 @@
-<div class="task-list-container container py-5">
-  <div class="header">
-    <h2 class="page-title">Your Scraping Tasks</h2>
-    <a routerLink="/task-creation/new" class="action-btn primary">Create New Task</a>
+<div class="workflow-list">
+  <div class="workflow-header">
+    <h2>Your Workflows</h2>
+    <a routerLink="/task-creation/new" class="button primary">+ New</a>
   </div>
-  <div *ngIf="tasks.length === 0" class="empty-state">
-    <h3 class="empty-title">No Tasks Yet</h3>
-    <p class="empty-subtitle">Get started by creating your first scraping task.</p>
-    <a routerLink="/task-creation/new" class="action-btn primary">Start Now</a>
-  </div>
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    <div *ngFor="let task of tasks" class="col">
-      <app-task-card [task]="task" (editTask)="onEditTask($event)" (deleteTask)="onDeleteTask($event)" (viewResults)="onViewResults($event)"></app-task-card>
+
+  <ng-container *ngIf="loaded">
+    <div *ngIf="workflow_list.length === 0" class="empty-state">
+      <p>No workflows yet.<br>Create your first scraping workflow!</p>
+      <a routerLink="/task-creation/new" class="button primary large">Create Workflow</a>
     </div>
-  </div>
+
+    <div class="workflow-grid" *ngIf="workflow_list.length > 0">
+      <app-workflow-card *ngFor="let workflow of workflow_list" [workflow]="workflow"></app-workflow-card>
+    </div>
+  </ng-container>
 </div>

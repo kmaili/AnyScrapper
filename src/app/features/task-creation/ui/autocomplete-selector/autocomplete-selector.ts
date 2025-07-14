@@ -20,8 +20,8 @@ import { DomElement } from '../../models/dom-element.model';
 })
 export class AutocompleteSelectorComponent implements AfterViewInit {
   @Input() domElements: DomElement[] = [];
-  @Input() selectedSelector: string = '';
-  @Output() selectedSelectorChange = new EventEmitter<string>();
+  @Input() selectedSelector: number = -1;
+  @Output() selectedSelectorChange = new EventEmitter<number>();
 
   @ViewChild('input') input!: ElementRef<HTMLInputElement>;
 
@@ -51,10 +51,10 @@ export class AutocompleteSelectorComponent implements AfterViewInit {
   }
 
   selectElement(element: DomElement) {
-    const selector = this.mapDomElementToSelector(element);
-    this.selectedSelector = selector;
-    this.selectedSelectorChange.emit(selector);
-    this.searchQuery = selector;
+    console.log(element)
+    this.selectedSelector = element.id;
+    this.selectedSelectorChange.emit(element.id);
+    this.searchQuery = element.tag_name;
     this.showList = false;
     this.selectedIndex = -1;
   }
@@ -62,7 +62,8 @@ export class AutocompleteSelectorComponent implements AfterViewInit {
   onBlur() {
     setTimeout(() => {
       this.showList = false;
-      this.searchQuery = this.selectedSelector || '';
+      this.searchQuery = '';
+      this.selectedIndex = -1;
     }, 200);
   }
 
@@ -90,7 +91,7 @@ export class AutocompleteSelectorComponent implements AfterViewInit {
         break;
       case 'Escape':
         this.showList = false;
-        this.searchQuery = this.selectedSelector || '';
+        this.searchQuery = '';
         this.input.nativeElement.blur();
         break;
     }
@@ -107,35 +108,7 @@ export class AutocompleteSelectorComponent implements AfterViewInit {
     }
   }
 
-  mapDomElementToSelector(element: DomElement): string {
-    const idAttr = element.attributes.find((attr) => attr.name === 'id');
-    if (idAttr) {
-      return `#${idAttr.value}`;
-    }
 
-    const classAttr = element.attributes.find((attr) => attr.name === 'class');
-    if (classAttr) {
-      const cleaned = classAttr.value.trim().replace(/\s+/g, '.');
-      return `.${cleaned}`;
-    }
-
-    return element.tag_name.toLowerCase(); // Fallback to tag only
-  }
-
-  getShortSelector(element: DomElement): string {
-    const idAttr = element.attributes.find((attr) => attr.name === 'id');
-    if (idAttr) {
-      return `#${idAttr.value}`;
-    }
-
-    const classAttr = element.attributes.find((attr) => attr.name === 'class');
-    if (classAttr) {
-      const classes = classAttr.value.split(' ').filter((cls) => cls.trim());
-      return `.${classes.slice(0, 2).join('.')}${classes.length > 2 ? '...' : ''}`;
-    }
-
-    return element.tag_name.toLowerCase();
-  }
 
   getIconForTag(tagName: string): string {
     switch (tagName.toLowerCase()) {

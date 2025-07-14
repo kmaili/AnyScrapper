@@ -3,68 +3,85 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { DomElementsSelectorWsService } from '../../data-access/dom-elements-selector/real-time-dom-elemnts-selector.service';
-import { DomElement } from '../../models/dom-element.model'; // Adjust the import path as needed
+import { DomElement } from '../../models/dom-element.model';
 import { AutocompleteSelectorComponent } from '../autocomplete-selector/autocomplete-selector';
 import { HttpClientModule } from '@angular/common/http';
 import { Action } from '../../models/action.model';
 import { Condition } from '../../models/condition.model';
 import { Loop } from '../../models/loop.model';
 import { Step } from '../../models/step.model';
-
+import { FilterActionsPipe } from '../../pipes/filter-actions-pipe';
+import { Workflow } from '../../models/workflow.model';
 
 @Component({
   selector: 'app-visual-selector-tool',
   standalone: true,
-  imports: [CommonModule, FormsModule, AutocompleteSelectorComponent, HttpClientModule],
+  imports: [CommonModule, FormsModule, AutocompleteSelectorComponent, HttpClientModule, FilterActionsPipe],
   templateUrl: './visual-selector-tool.html',
   styleUrls: ['./visual-selector-tool.css']
 })
 export class VisualSelectorToolComponent implements OnInit, OnDestroy {
-  @Input() steps: Step[] = []; // This component now manages an array of steps
-  @Output() stepsChange = new EventEmitter<Step[]>(); // Emits its entire steps array
-
-  @Output() workflowCompleted = new EventEmitter<boolean>();
+  @Input() steps: Step[] = [];
+  @Input() initialized_workflow: Workflow = {
+    name: '',
+    startUrl: '',
+    steps: []
+  };
+  @Output() stepsChange = new EventEmitter<Step[]>();
+  @Output() workflow = new EventEmitter<Workflow>();
 
   domElements: DomElement[] = [];
   private wsSubscription!: Subscription;
 
-  // isExpanded will now be a map of step references or unique IDs for expanded state,
-  // or managed differently if you want global state for expansions.
-  // For simplicity, we can keep it as an index-based map for the current component's direct children.
-  isExpanded: { [key: number]: boolean } = {}; // For the direct children of this component instance
+  isExpanded: { [key: number]: boolean } = {};
+
+  ACTION_TYPE_CHOICES = [
+    { value: 'on_element', label: 'On Element' },
+    { value: 'on_page', label: 'On Page' },
+  ];
+
+  ACTION_NAME_CHOICES = [
+    { value: 'element_click', label: 'Element Click' },
+    { value: 'element_right_click', label: 'Element Right Click' },
+    { value: 'element_text', label: 'Element Text Extraction' },
+    { value: 'element_input', label: 'Element Input' }, // Keep this, assuming you might add an input value field later
+    { value: 'element_long_press', label: 'Element Long Press' },
+    { value: 'element_double_click', label: 'Element Double Click' },
+    { value: 'element_inner_html', label: 'Element Inner HTML' },
+    { value: 'element_get_attribute', label: 'Element Get Attribute' }, // <--- ADD THIS LINE
+    { value: 'page_scroll_up', label: 'Page Scroll Up' },
+    { value: 'page_scroll_down', label: 'Page Scroll Down' },
+    { value: 'page_refresh', label: 'Page Refresh' },
+    { value: 'page_navigate', label: 'Page Navigate' },
+    { value: 'page_go_back', label: 'Page Go Back' },
+    { value: 'page_go_forward', label: 'Page Go Forward' },
+  ];
 
   constructor(private wsService: DomElementsSelectorWsService) {}
 
   ngOnInit() {
-    // If no steps are provided, initialize with a default action
-    // This logic only applies to the top-level component, or if a nested component
-    // is passed an empty array for its steps.
-    if (!this.steps || this.steps.length === 0) { // Check for undefined or empty array
-      this.steps = [{ type: 'action', actionType: 'page', name: 'scroll_down', tag: '', selector: '' }];
-      this.emitChanges(); // Emit if we initialize steps
+    if (!this.steps || this.steps.length === 0) {
+      this.steps = [{ type: 'action', actionType: 'on_page', name: 'page_scroll_down', tag: '', selector: -1 }];
+      this.emitChanges();
     }
 
-    // Initialize expansion state for existing steps
     this.steps.forEach((_, i) => this.isExpanded[i] = true);
 
-    // Connect to WebSocket (replace with your WebSocket URL)
     this.wsService.connect('ws://localhost:8000/ws/dom-elements/', 'http://localhost:8000/api/dom-elements/');
 
-    // Subscribe to DOM elements from WebSocket
     this.wsSubscription = this.wsService.domElements$.subscribe(elements => {
       this.domElements = elements;
-      // Ensure selector is set for existing steps if needed (only if initially empty)
       this.steps.forEach(step => {
-        const defaultSelector = this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '';
+        const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
         if (step.type === 'condition' && !step.selector && this.domElements.length) {
           step.selector = defaultSelector;
         } else if (step.type === 'loop' && step.loopType === 'until_condition' && step.condition && !step.condition.selector && this.domElements.length) {
           step.condition.selector = defaultSelector;
-        } else if (step.type === 'action' && step.actionType === 'element' && !step.selector && this.domElements.length) {
+        } else if (step.type === 'action' && step.actionType === 'on_element' && !step.selector && this.domElements.length) {
           step.selector = defaultSelector;
         }
       });
-      this.emitChanges(); // Emit changes after potentially updating selectors
+      this.emitChanges();
     });
   }
 
@@ -73,27 +90,16 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     this.wsService.disconnect();
   }
 
-  private mapDomElementToSelector(element: DomElement): string {
-    const idAttr = element.attributes.find(attr => attr.name === 'id');
-    if (idAttr && idAttr.value) {
-      return `#${idAttr.value}`;
-    }
-    const classAttr = element.attributes.find(attr => attr.name === 'class');
-    if (classAttr && classAttr.value) {
-      return `.${classAttr.value.replace(/\s+/g, ' ').trim().replace(/\s/g, '.')}`;
-    }
-    return `${element.tag_name}[data-xpath="${element.x_path}"]`;
+  private mapDomElementToSelector(element: DomElement): number {
+    return element.id;
   }
-
-  // addStep, deleteStep will now only operate on the current component's `this.steps` array.
-  // The addNestedStep/removeNestedStep logic will be simplified.
 
   addStep(type: 'action' | 'condition' | 'loop') {
     let newStep: Step;
-    const defaultSelector = this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '';
+    const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
 
     if (type === 'action') {
-      newStep = { type: 'action', actionType: 'page', name: 'scroll_down', tag: '', selector: '' } as Action;
+      newStep = { type: 'action', actionType: 'on_page', name: 'page_scroll_down', tag: '', selector: -1 } as Action;
     } else if (type === 'condition') {
       newStep = {
         type: 'condition',
@@ -124,73 +130,53 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   deleteStep(index: number, event: Event) {
     event.stopPropagation();
     this.steps.splice(index, 1);
-    // Cleanup expansion state
     delete this.isExpanded[index];
-    // Re-index isExpanded keys if needed (for consistency if you reorder, not strictly needed for splice)
-    // For simplicity, re-initialize isExpanded on delete for consistency with remaining steps
     const newIsExpanded: { [key: number]: boolean } = {};
     this.steps.forEach((_, i) => {
-        if (typeof this.isExpanded[i] !== 'undefined') {
-            newIsExpanded[i] = this.isExpanded[i];
-        } else if (typeof this.isExpanded[i + 1] !== 'undefined') { // Adjust for deleted index
-            newIsExpanded[i] = this.isExpanded[i + 1];
-        } else {
-             newIsExpanded[i] = true; // Default to expanded if state not found
-        }
+      if (typeof this.isExpanded[i] !== 'undefined') {
+        newIsExpanded[i] = this.isExpanded[i];
+      } else if (typeof this.isExpanded[i + 1] !== 'undefined') {
+        newIsExpanded[i] = this.isExpanded[i + 1];
+      } else {
+        newIsExpanded[i] = true;
+      }
     });
     this.isExpanded = newIsExpanded;
 
     this.emitChanges();
   }
 
-  // --- NEW/SIMPLIFIED NESTED STEP HANDLING ---
-  // These methods will be called by buttons *within* the current component's template,
-  // to add/remove steps to its *own* `steps` array, which are then passed to children.
-
   addNestedActionToBranch(parentStep: Step, branch: 'ifTrue' | 'ifFalse' | 'steps') {
-      const newNestedAction: Action = { type: 'action', actionType: 'page', name: 'scroll_down', tag: '', selector: '' };
+    const newNestedAction: Action = { type: 'action', actionType: 'on_page', name: 'page_scroll_down', tag: '', selector: -1 };
 
-      if (parentStep.type === 'condition' && (branch === 'ifTrue' || branch === 'ifFalse')) {
-          if (!parentStep[branch]) {
-              parentStep[branch] = [];
-          }
-          parentStep[branch].push(newNestedAction);
-      } else if ((parentStep.type === 'loop' || (parentStep.type === 'action' && (parentStep as Action).name === 'sequence')) && branch === 'steps') {
-          if (!parentStep.steps) {
-              parentStep.steps = [];
-          }
-          parentStep.steps.push(newNestedAction);
+    if (parentStep.type === 'condition' && (branch === 'ifTrue' || branch === 'ifFalse')) {
+      if (!parentStep[branch]) {
+        parentStep[branch] = [];
       }
-      this.emitChanges();
+      parentStep[branch].push(newNestedAction);
+    } else if ((parentStep.type === 'loop' || (parentStep.type === 'action' && (parentStep as Action).name === 'sequence')) && branch === 'steps') {
+      if (!parentStep.steps) {
+        parentStep.steps = [];
+      }
+      parentStep.steps.push(newNestedAction);
+    }
+    this.emitChanges();
   }
-
-  // No separate removeNestedStep method in *this* component.
-  // The nested `app-visual-selector-tool` component will handle deleting its own steps
-  // and emit the updated array back.
-
-  // The updateNestedAction method is no longer needed.
-  // Instead, the @Input `steps` of the child component will be updated directly
-  // by `ngModelChange` or when its `(stepsChange)` event fires and the parent
-  // updates its own data structure.
-
-  // --- Existing Methods (Minor adjustments for robustness) ---
 
   updateStepType(index: number, type: 'action' | 'condition' | 'loop') {
     const originalStep = this.steps[index];
     let newStep: Step;
-    const defaultSelector = this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '';
+    const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
 
     if (type === 'action') {
       newStep = {
         type: 'action',
-        actionType: 'page',
-        name: 'scroll_down',
+        actionType: 'on_page', // Default to 'on_page'
+        name: 'page_scroll_down', // Default to 'page_scroll_down'
         tag: originalStep.tag || '',
-        selector: ''
+        selector: -1
       } as Action;
-      if ((originalStep as Action).actionType === 'container' && (originalStep as Action).name === 'sequence' && (originalStep as Action).steps) {
-        (newStep as Action).actionType = 'container';
-        (newStep as Action).name = 'sequence';
+      if ((originalStep as Action).steps) {
         (newStep as Action).steps = (originalStep as Action).steps;
       }
     } else if (type === 'condition') {
@@ -219,30 +205,26 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     this.emitChanges();
   }
 
-  updateActionType(index: number, actionType: 'page' | 'element' | 'container') {
+  updateActionType(index: number, actionType: 'on_page' | 'on_element') {
     const step = this.steps[index] as Action;
     step.actionType = actionType;
 
-    const defaultSelector = this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '';
+    const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
 
-    if (actionType === 'page') {
-      step.name = 'scroll_down';
-      step.selector = '';
-      delete step.attribute;
+    if (actionType === 'on_page') {
+      step.name = 'page_scroll_down'; // Default page action
+      step.selector = -1;
+      delete step.attribute; // Clear attribute for page actions
       delete step.steps;
       delete step.url;
-    } else if (actionType === 'element') {
-      step.name = 'get_text';
+      delete step.value; // Clear value for page actions
+    } else if (actionType === 'on_element') {
+      step.name = 'element_text'; // Default element action
       step.selector = defaultSelector;
-      delete step.attribute;
+      delete step.attribute; // Clear attribute for element actions, unless it's specifically 'get_attribute'
       delete step.steps;
       delete step.url;
-    } else if (actionType === 'container') {
-      step.name = 'sequence';
-      step.steps = step.steps || [];
-      step.selector = '';
-      delete step.attribute;
-      delete step.url;
+      delete step.value; // Clear value for element actions
     }
     this.emitChanges();
   }
@@ -250,10 +232,26 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   updateActionName(index: number, name: string) {
     const step = this.steps[index] as Action;
     step.name = name;
-    if (name === 'visit_link') {
+
+    // Reset URL and Attribute based on new action name
+    if (name === 'page_navigate') {
       step.url = step.url || '';
-    } else {
+      delete step.attribute;
+      delete step.value;
+    } else if (name === 'element_get_attribute') { // <--- ADD THIS CONDITION
+      step.attribute = step.attribute || ''; // Initialize attribute
       delete step.url;
+      delete step.value;
+    }
+    else if (name === 'element_input') { // Assuming element_input will have a value
+      step.value = step.value || '';
+      delete step.attribute;
+      delete step.url;
+    }
+    else { // For other actions, clear URL, attribute, and value
+      delete step.url;
+      delete step.attribute;
+      delete step.value;
     }
     this.emitChanges();
   }
@@ -262,7 +260,7 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     const step = this.steps[index] as Loop;
     step.loopType = loopType;
 
-    const defaultSelector = this.domElements.length ? this.mapDomElementToSelector(this.domElements[0]) : '';
+    const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
 
     if (loopType === 'fixed_iterations') {
       delete step.condition;
@@ -277,16 +275,13 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     this.emitChanges();
   }
 
-  // --- IMPORTANT NEW METHOD FOR NESTED COMPONENTS ---
-  // This method will be called when a child app-visual-selector-tool emits its stepsChange event.
-  // It receives the *full updated array* from the child and updates the parent's model.
   onNestedStepsChange(parentStep: Step, branch: 'ifTrue' | 'ifFalse' | 'steps', updatedSteps: Step[]) {
-      if (parentStep.type === 'condition' && (branch === 'ifTrue' || branch === 'ifFalse')) {
-          parentStep[branch] = updatedSteps as Action[]; // Assign the whole updated array
-      } else if ((parentStep.type === 'loop' || (parentStep.type === 'action' && (parentStep as Action).name === 'sequence')) && branch === 'steps') {
-          parentStep.steps = updatedSteps as Action[]; // Assign the whole updated array
-      }
-      this.emitChanges(); // Propagate the change up
+    if (parentStep.type === 'condition' && (branch === 'ifTrue' || branch === 'ifFalse')) {
+      parentStep[branch] = updatedSteps as Action[];
+    } else if ((parentStep.type === 'loop' || (parentStep.type === 'action' && (parentStep as Action).name === 'sequence')) && branch === 'steps') {
+      parentStep.steps = updatedSteps as Action[];
+    }
+    this.emitChanges();
   }
 
   toggleCollapse(index: number) {
@@ -312,12 +307,14 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   }
 
   private emitChanges() {
-    // Always emit a new array reference to ensure Angular's OnPush change detection works if used.
     this.stepsChange.emit([...this.steps]);
   }
 
   getStepLabel(step: Step): string {
-    if (step.type === 'action') return `Action: ${((step as Action).name || 'Unnamed')}`;
+    if (step.type === 'action') {
+      const actionName = this.ACTION_NAME_CHOICES.find(choice => choice.value === (step as Action).name)?.label;
+      return `Action: ${actionName || 'Unnamed'}`;
+    }
     if (step.type === 'condition') return `Condition: ${((step as Condition).conditionType || 'Unnamed')}`;
     return `Loop: ${((step as Loop).loopType || 'Unnamed')}`;
   }
@@ -327,7 +324,7 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       'action': step.type === 'action',
       'condition': step.type === 'condition',
       'loop': step.type === 'loop',
-      'bg-purple-50': step.type === 'action' && (step as Action).name === 'sequence'
+      'bg-purple-50': step.type === 'action'
     };
   }
 
@@ -345,8 +342,10 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   }
 
   completeWorkflow() {
-    // Emit an event to notify that the workflow is completed
-    this.workflowCompleted.emit(true);
-    console.log('Workflow completed with steps:', this.steps);
+    this.workflow.emit({
+      name: this.initialized_workflow.name,
+      startUrl: this.initialized_workflow.startUrl,
+      steps: this.steps
+    });
   }
 }
