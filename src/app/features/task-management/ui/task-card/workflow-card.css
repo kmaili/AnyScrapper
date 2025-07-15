@@ -1,83 +1,182 @@
 .workflow-card {
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  padding: 16px;
-}
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
 
-.workflow-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-}
+        .workflow-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
 
-.workflow-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #1c1c1e;
-}
+        .workflow-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+        }
 
-.workflow-url {
-  font-size: 0.8rem;
-  color: #6e6e73;
-  margin-bottom: 14px;
-  word-break: break-word;
-}
+        .workflow-card-content {
+            position: relative;
+            z-index: 1;
+        }
 
-.workflow-url a {
-  color: #007aff;
-  text-decoration: none;
-}
+        .workflow-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
 
-.workflow-url a:hover {
-  text-decoration: underline;
-}
+        .workflow-url {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
 
-.workflow-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
+        .workflow-url span:first-child {
+            font-size: 14px;
+            font-weight: 500;
+            color: #86868b;
+            display: block;
+            margin-bottom: 4px;
+        }
 
-/* Buttons */
-.button {
-  display: inline-block;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 8px 14px;
-  border: none;
-  border-radius: 10px;
-  text-align: center;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  text-decoration: none;
-}
+        .workflow-url a {
+            color: #007aff;
+            text-decoration: none;
+            font-size: 14px;
+            word-break: break-all;
+            transition: color 0.2s ease;
+        }
 
-.button.small {
-  padding: 6px 12px;
-  font-size: 0.75rem;
-}
+        .workflow-url a:hover {
+            color: #0056b3;
+        }
 
-.button.primary {
-  background-color: #007aff;
-  color: white;
-}
+        .workflow-status {
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-.button.primary:hover {
-  background-color: #006ae6;
-}
+        .workflow-status > span:first-child {
+            font-size: 14px;
+            font-weight: 500;
+            color: #86868b;
+        }
 
-.button.danger {
-  background-color: #ff3b30;
-  color: white;
-}
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
-.button.danger:hover {
-  background-color: #e0291e;
-}
+        .status-badge.completed {
+            background: #d4edda;
+            color: #155724;
+        }
 
-.button.large {
-  font-size: 0.95rem;
-  padding: 10px 18px;
-}
+        .status-badge.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-badge.draft {
+            background: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #dee2e6;
+        }
+
+        .workflow-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: capitalize;
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .button.small {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .button.primary {
+            background: #007aff;
+            color: white;
+        }
+
+        .button.primary:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .button.primary:active {
+            transform: translateY(0);
+        }
+
+        .button.danger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .button.danger:hover {
+            background: #d70015;
+            transform: translateY(-1px);
+        }
+
+        .button.danger:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .workflow-card {
+                padding: 24px;
+            }
+            
+            .workflow-actions {
+                flex-direction: column;
+            }
+            
+            .button {
+                flex: none;
+            }
+        }

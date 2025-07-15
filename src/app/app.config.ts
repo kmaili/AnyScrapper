@@ -5,7 +5,6 @@ import { routes } from './app.routes';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/auth/auth-interceptor';
 import { providePrimeNG } from 'primeng/config';
-import { Message } from 'primeng/message';
 import { MessageService } from 'primeng/api';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
@@ -20,9 +19,14 @@ export const appConfig: ApplicationConfig = {
     MessageService,
     provideAnimationsAsync(),
     providePrimeNG({
-      theme: {
-        preset: Aura,
-      },
-    }),
+            theme: {
+                preset: Aura,
+                options: {
+                    prefix: 'p',
+                    darkModeSelector: 'system',
+                    cssLayer: false
+                }
+            }
+        })
   ]
 };

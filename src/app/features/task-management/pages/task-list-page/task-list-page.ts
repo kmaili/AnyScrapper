@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { WorkflowCardComponent } from '../../ui/task-card/workflow-card';
 import { WorkflowService } from '../../../task-creation/data-access/workflow/workflow.service';
 import { Workflow } from '../../../task-creation/models/workflow.model';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-task-list-page',
@@ -18,7 +19,8 @@ export class TaskListPageComponent implements OnInit {
 
   constructor(
     private workflowService: WorkflowService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private messageService: MessageService
   ) {}  
 
   ngOnInit() {
@@ -40,5 +42,10 @@ export class TaskListPageComponent implements OnInit {
     }
   });
 }
+onWorkflowDeleted(event: Workflow) {
+    this.workflow_list = this.workflow_list.filter(workflow => workflow.id !== event.id);
+    this.messageService.add({ severity: 'success', summary: 'Workflow Deleted', detail: `Workflow "${event.name}" has been deleted successfully.` });
+    this.cdr.detectChanges(); // Forcer la détection des changements
+  }
 
 }

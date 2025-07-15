@@ -84,10 +84,11 @@
             <label class="form-label">
               <span class="material-icons">find_in_page</span> Selector
             </label>
-            <app-autocomplete-selector
-              [(selectedSelector)]="step.selector!"
-              [domElements]="domElements">
-            </app-autocomplete-selector>
+            <select [(ngModel)]="step.selector"
+                    class="form-control">
+              <option *ngFor="let element of domElements" [value]="element.id">{{ element.tag_name }} - {{ element.attributes | json }}</option>
+            </select>
+            
           </div>
 
           <div *ngIf="step.actionType === 'on_element' && step.name === 'element_get_attribute'" class="form-group">

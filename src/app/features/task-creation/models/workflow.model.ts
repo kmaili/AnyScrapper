@@ -5,4 +5,5 @@ export interface Workflow {
   name: string;
   startUrl: string;
   steps: Step[]; // Optional: To hold all steps related to this workflow for easier manipulation (not directly from Django model)
+  status?: 'completed' | 'in_progress' | 'draft';
 }

@@ -12,7 +12,7 @@ export class WorkflowService {
   constructor(private http:HttpClient) { }
 
   create_workflow(workflow: Workflow) {
-    return this.http.post('http://localhost:8000/api/workflows/', { 
+    return this.http.post('http://localhost:8000/api/workflows/new/', { 
       'workflow_name': workflow.name,
       'start_url': workflow.startUrl,
       'steps': workflow.steps
@@ -20,6 +20,15 @@ export class WorkflowService {
   }
 
   get_workflows() {
-    return this.http.get<Workflow[]>('http://localhost:8000/api/workflows/list/')
+    return this.http.get<Workflow[]>('http://localhost:8000/api/workflows/')
+  }
+
+
+  execute_workflow(workflow: Workflow) {
+    return this.http.post(`http://localhost:8000/api/workflows/execute/${workflow.id}/`, {});
+  }
+
+  deleteWorkflow(workflowId: number) {
+    return this.http.delete(`http://localhost:8000/api/workflows/${workflowId}/`);
   }
 }

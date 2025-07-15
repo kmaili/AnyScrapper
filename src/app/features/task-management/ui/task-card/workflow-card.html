@@ -1,13 +1,27 @@
 <div class="workflow-card">
-  <div class="workflow-card-content">
-    <div class="workflow-title">{{ workflow.name }}</div>
-    <div class="workflow-url">
-      <span>URL:</span>
-      <a [href]="workflow.startUrl" target="_blank">{{ workflow.startUrl }}</a>
+        <div class="workflow-card-content">
+            <div class="workflow-title">{{workflow.name}}</div>
+            <div class="workflow-url">
+                <span>URL:</span>
+                <a href="https://example.com/workflow/data-processing" target="_blank">https://example.com/workflow/data-processing</a>
+            </div>
+            <div class="workflow-status">
+                <span>Status:</span>
+                <span class="status-badge {{workflow.status}}">{{workflow.status}}</span>
+            </div>
+            <div class="workflow-actions">
+                <button class="button small primary" (click)="executeWorkflow()">
+                    <i class="pi pi-play-circle"></i>
+                    Start
+                </button>
+                <button class="button small primary">
+                    <i class="pi pi-pen-to-square"></i>
+                    Edit
+                </button>
+                <button class="button small danger" (click)="deleteWorkflow()">
+                    <i class="pi pi-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
     </div>
-    <div class="workflow-actions">
-      <button class="button small primary">Edit</button>
-      <button class="button small danger">Delete</button>
-    </div>
-  </div>
-</div>

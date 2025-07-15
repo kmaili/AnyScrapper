@@ -36,6 +36,7 @@ export class UrlInputFormComponent {
       chrome.runtime.sendMessage(
         'omidbmajajpjiajacaipnbddgcbkiaek',  // Extension ID
         { jwt: this.authService.getToken(), url: this.url },
+        console.log('Message sent to extension:', { jwt: this.authService.getToken(), url: this.url }),
         (response: any) => {
           if (chrome.runtime.lastError) {
             console.error('Error sending message to extension:', chrome.runtime.lastError.message);

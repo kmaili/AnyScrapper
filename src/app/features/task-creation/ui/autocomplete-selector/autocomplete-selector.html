@@ -33,7 +33,7 @@
       *ngFor="let element of filteredElements; let i = index"
       class="result-item"
       [class.active]="i === selectedIndex"
-      (mousedown)="selectElement(element)"
+      (click)="selectElement(element)"
       (mouseover)="selectedIndex = i"
       role="option"
       [attr.aria-selected]="i === selectedIndex"

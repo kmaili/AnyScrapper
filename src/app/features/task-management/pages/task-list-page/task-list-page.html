@@ -1,7 +1,7 @@
 <div class="workflow-list">
   <div class="workflow-header">
     <h2>Your Workflows</h2>
-    <a routerLink="/task-creation/new" class="button primary">+ New</a>
+    <a routerLink="/task-creation/new" class="button primary text-white">+ New</a>
   </div>
 
   <ng-container *ngIf="loaded">
@@ -11,7 +11,7 @@
     </div>
 
     <div class="workflow-grid" *ngIf="workflow_list.length > 0">
-      <app-workflow-card *ngFor="let workflow of workflow_list" [workflow]="workflow"></app-workflow-card>
+      <app-workflow-card *ngFor="let workflow of workflow_list" [workflow]="workflow" (workflowDeleted)="onWorkflowDeleted($event)"></app-workflow-card>
     </div>
   </ng-container>
 </div>
