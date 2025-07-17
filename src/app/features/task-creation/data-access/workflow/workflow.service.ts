@@ -22,6 +22,9 @@ export class WorkflowService {
   get_workflows() {
     return this.http.get<Workflow[]>('http://localhost:8000/api/workflows/')
   }
+  get_workflow_by_id(id: number) {
+    return this.http.get<Workflow>(`http://localhost:8000/api/workflows/${id}/`);
+  }
 
 
   execute_workflow(workflow: Workflow) {

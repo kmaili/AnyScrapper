@@ -3,7 +3,7 @@
             <div class="workflow-title">{{workflow.name}}</div>
             <div class="workflow-url">
                 <span>URL:</span>
-                <a href="https://example.com/workflow/data-processing" target="_blank">https://example.com/workflow/data-processing</a>
+                <a href="{{workflow.startUrl}}" target="_blank">{{workflow.startUrl}}</a>
             </div>
             <div class="workflow-status">
                 <span>Status:</span>
@@ -14,7 +14,7 @@
                     <i class="pi pi-play-circle"></i>
                     Start
                 </button>
-                <button class="button small primary">
+                <button class="button small primary" (click)="editWorkflow()">
                     <i class="pi pi-pen-to-square"></i>
                     Edit
                 </button>

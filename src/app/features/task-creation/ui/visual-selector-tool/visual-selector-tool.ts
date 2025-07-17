@@ -6,12 +6,9 @@ import { DomElementsSelectorWsService } from '../../data-access/dom-elements-sel
 import { DomElement } from '../../models/dom-element.model';
 import { AutocompleteSelectorComponent } from '../autocomplete-selector/autocomplete-selector';
 import { HttpClientModule } from '@angular/common/http';
-import { Action } from '../../models/action.model';
-import { Condition } from '../../models/condition.model';
-import { Loop } from '../../models/loop.model';
-import { Step } from '../../models/step.model';
 import { FilterActionsPipe } from '../../pipes/filter-actions-pipe';
 import { Workflow } from '../../models/workflow.model';
+import { Step } from '../../models/step.model';
 
 @Component({
   selector: 'app-visual-selector-tool',
@@ -44,11 +41,11 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     { value: 'element_click', label: 'Element Click' },
     { value: 'element_right_click', label: 'Element Right Click' },
     { value: 'element_text', label: 'Element Text Extraction' },
-    { value: 'element_input', label: 'Element Input' }, // Keep this, assuming you might add an input value field later
+    { value: 'element_input', label: 'Element Input' },
     { value: 'element_long_press', label: 'Element Long Press' },
     { value: 'element_double_click', label: 'Element Double Click' },
     { value: 'element_inner_html', label: 'Element Inner HTML' },
-    { value: 'element_get_attribute', label: 'Element Get Attribute' }, // <--- ADD THIS LINE
+    { value: 'element_get_attribute', label: 'Element Get Attribute' },
     { value: 'page_scroll_up', label: 'Page Scroll Up' },
     { value: 'page_scroll_down', label: 'Page Scroll Down' },
     { value: 'page_refresh', label: 'Page Refresh' },
@@ -61,7 +58,19 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     if (!this.steps || this.steps.length === 0) {
-      this.steps = [{ type: 'action', actionType: 'on_page', name: 'page_scroll_down', tag: '', selector: -1 }];
+      this.steps = [
+        {
+          id: 1,
+          step_type: 'action',
+          order: 1,
+          workflow: 1,
+          action: {
+            step: 1,
+            action_type: 'on_page',
+            action_name: 'page_scroll_down'
+          }
+        }
+      ];
       this.emitChanges();
     }
 
@@ -71,16 +80,6 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
 
     this.wsSubscription = this.wsService.domElements$.subscribe(elements => {
       this.domElements = elements;
-      this.steps.forEach(step => {
-        const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
-        if (step.type === 'condition' && !step.selector && this.domElements.length) {
-          step.selector = defaultSelector;
-        } else if (step.type === 'loop' && step.loopType === 'until_condition' && step.condition && !step.condition.selector && this.domElements.length) {
-          step.condition.selector = defaultSelector;
-        } else if (step.type === 'action' && step.actionType === 'on_element' && !step.selector && this.domElements.length) {
-          step.selector = defaultSelector;
-        }
-      });
       this.emitChanges();
     });
   }
@@ -95,32 +94,49 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   }
 
   addStep(type: 'action' | 'condition' | 'loop') {
+    const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
+    const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
     let newStep: Step;
-    const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
 
     if (type === 'action') {
-      newStep = { type: 'action', actionType: 'on_page', name: 'page_scroll_down', tag: '', selector: -1 } as Action;
+      newStep = {
+        id: newId,
+        step_type: 'action',
+        order: this.steps.length + 1,
+        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+        action: {
+          step: newId,
+          action_type: 'on_page',
+          action_name: 'page_scroll_down'
+        }
+      };
     } else if (type === 'condition') {
       newStep = {
-        type: 'condition',
-        conditionType: 'element_found',
-        selector: defaultSelector,
-        ifTrue: [],
-        ifFalse: [],
-        tag: ''
-      } as Condition;
+        id: newId,
+        step_type: 'condition',
+        order: this.steps.length + 1,
+        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+        condition: {
+          step: newId,
+          condition_type: 'element_found',
+          selector: defaultSelector,
+          if_true_child_steps: [],
+          if_false_child_steps: []
+        }
+      };
     } else { // type === 'loop'
       newStep = {
-        type: 'loop',
-        loopType: 'fixed_iterations',
-        iterations: 1,
-        steps: [],
-        condition: {
-          conditionType: 'element_found',
-          selector: defaultSelector
-        },
-        tag: ''
-      } as Loop;
+        id: newId,
+        step_type: 'loop',
+        order: this.steps.length + 1,
+        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+        loop: {
+          step: newId,
+          loop_type: 'fixed_iterations',
+          iterations_count: 1,
+          child_steps: []
+        }
+      };
     }
     this.steps.push(newStep);
     this.isExpanded[this.steps.length - 1] = true;
@@ -146,141 +162,181 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     this.emitChanges();
   }
 
-  addNestedActionToBranch(parentStep: Step, branch: 'ifTrue' | 'ifFalse' | 'steps') {
-    const newNestedAction: Action = { type: 'action', actionType: 'on_page', name: 'page_scroll_down', tag: '', selector: -1 };
+  addNestedStep(parentStep: Step, branch: 'if_true_child_steps' | 'if_false_child_steps' | 'child_steps', parentIndex: number) {
+    const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
+    const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
+    let order = 1;
+    let nestedSteps: Step[] | null | undefined;
 
-    if (parentStep.type === 'condition' && (branch === 'ifTrue' || branch === 'ifFalse')) {
-      if (!parentStep[branch]) {
-        parentStep[branch] = [];
-      }
-      parentStep[branch].push(newNestedAction);
-    } else if ((parentStep.type === 'loop' || (parentStep.type === 'action' && (parentStep as Action).name === 'sequence')) && branch === 'steps') {
-      if (!parentStep.steps) {
-        parentStep.steps = [];
-      }
-      parentStep.steps.push(newNestedAction);
+    if (parentStep.step_type === 'condition' && parentStep.condition && (branch === 'if_true_child_steps' || branch === 'if_false_child_steps')) {
+      nestedSteps = parentStep.condition[branch];
+      order = (nestedSteps?.length || 0) + 1;
+    } else if (parentStep.step_type === 'loop' && parentStep.loop && branch === 'child_steps') {
+      nestedSteps = parentStep.loop.child_steps;
+      order = (nestedSteps?.length || 0) + 1;
     }
+
+    const newNestedStep: Step = {
+      id: newId,
+      step_type: 'action',
+      order: order,
+      workflow: parentStep.workflow,
+      parent_loop: parentStep.step_type === 'loop' ? parentStep.id : parentStep.parent_loop,
+      action: {
+        step: newId,
+        action_type: 'on_page',
+        action_name: 'page_scroll_down'
+      }
+    };
+
+    if (parentStep.step_type === 'condition' && parentStep.condition && (branch === 'if_true_child_steps' || branch === 'if_false_child_steps')) {
+      if (!parentStep.condition[branch]) {
+        parentStep.condition[branch] = [];
+      }
+      parentStep.condition[branch]!.push(newNestedStep);
+    } else if (parentStep.step_type === 'loop' && parentStep.loop && branch === 'child_steps') {
+      if (!parentStep.loop.child_steps) {
+        parentStep.loop.child_steps = [];
+      }
+      parentStep.loop.child_steps!.push(newNestedStep);
+    }
+
+    // Optionally add to the flat steps array if needed for rendering
+    this.steps.splice(parentIndex + 1, 0, newNestedStep);
+    this.isExpanded[this.steps.length - 1] = true;
     this.emitChanges();
   }
 
-  updateStepType(index: number, type: 'action' | 'condition' | 'loop') {
+  updateStepType(index: number, stepType: 'action' | 'condition' | 'loop') {
     const originalStep = this.steps[index];
+    const newId = originalStep.id;
+    const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
     let newStep: Step;
-    const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
 
-    if (type === 'action') {
+    if (stepType === 'action') {
       newStep = {
-        type: 'action',
-        actionType: 'on_page', // Default to 'on_page'
-        name: 'page_scroll_down', // Default to 'page_scroll_down'
-        tag: originalStep.tag || '',
-        selector: -1
-      } as Action;
-      if ((originalStep as Action).steps) {
-        (newStep as Action).steps = (originalStep as Action).steps;
-      }
-    } else if (type === 'condition') {
+        id: newId,
+        step_type: 'action',
+        order: originalStep.order,
+        workflow: originalStep.workflow,
+        action: {
+          step: newId,
+          action_type: 'on_page',
+          action_name: 'page_scroll_down'
+        }
+      };
+    } else if (stepType === 'condition') {
       newStep = {
-        type: 'condition',
-        conditionType: 'element_found',
-        selector: defaultSelector,
-        ifTrue: (originalStep as Condition).ifTrue || [],
-        ifFalse: (originalStep as Condition).ifFalse || [],
-        tag: originalStep.tag || ''
-      } as Condition;
-    } else { // type === 'loop'
+        id: newId,
+        step_type: 'condition',
+        order: originalStep.order,
+        workflow: originalStep.workflow,
+        condition: {
+          step: newId,
+          condition_type: 'element_found',
+          selector: defaultSelector,
+          if_true_child_steps: [],
+          if_false_child_steps: []
+        }
+      };
+    } else { // stepType === 'loop'
       newStep = {
-        type: 'loop',
-        loopType: 'fixed_iterations',
-        iterations: (originalStep as Loop).iterations || 1,
-        steps: (originalStep as Loop).steps || [],
-        condition: (originalStep as Loop).condition || {
-          conditionType: 'element_found',
-          selector: defaultSelector
-        },
-        tag: originalStep.tag || ''
-      } as Loop;
+        id: newId,
+        step_type: 'loop',
+        order: originalStep.order,
+        workflow: originalStep.workflow,
+        loop: {
+          step: newId,
+          loop_type: 'fixed_iterations',
+          iterations_count: 1,
+          child_steps: []
+        }
+      };
     }
     this.steps[index] = newStep;
     this.emitChanges();
   }
 
   updateActionType(index: number, actionType: 'on_page' | 'on_element') {
-    const step = this.steps[index] as Action;
-    step.actionType = actionType;
+    const step = this.steps[index];
+    if (step.step_type !== 'action' || !step.action) return;
+    step.action.action_type = actionType;
 
-    const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
+    const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
 
     if (actionType === 'on_page') {
-      step.name = 'page_scroll_down'; // Default page action
-      step.selector = -1;
-      delete step.attribute; // Clear attribute for page actions
-      delete step.steps;
-      delete step.url;
-      delete step.value; // Clear value for page actions
+      step.action.action_name = 'page_scroll_down';
+      step.action.selector = null;
+      delete step.action.attribute;
+      delete step.action.value;
+      delete step.action.url;
     } else if (actionType === 'on_element') {
-      step.name = 'element_text'; // Default element action
-      step.selector = defaultSelector;
-      delete step.attribute; // Clear attribute for element actions, unless it's specifically 'get_attribute'
-      delete step.steps;
-      delete step.url;
-      delete step.value; // Clear value for element actions
+      step.action.action_name = 'element_text';
+      step.action.selector = defaultSelector;
+      delete step.action.attribute;
+      delete step.action.value;
+      delete step.action.url;
     }
     this.emitChanges();
   }
 
-  updateActionName(index: number, name: string) {
-    const step = this.steps[index] as Action;
-    step.name = name;
+  updateActionName(index: number, actionName: string) {
+    const step = this.steps[index];
+    if (step.step_type !== 'action' || !step.action) return;
+    step.action.action_name = actionName;
 
-    // Reset URL and Attribute based on new action name
-    if (name === 'page_navigate') {
-      step.url = step.url || '';
-      delete step.attribute;
-      delete step.value;
-    } else if (name === 'element_get_attribute') { // <--- ADD THIS CONDITION
-      step.attribute = step.attribute || ''; // Initialize attribute
-      delete step.url;
-      delete step.value;
-    }
-    else if (name === 'element_input') { // Assuming element_input will have a value
-      step.value = step.value || '';
-      delete step.attribute;
-      delete step.url;
-    }
-    else { // For other actions, clear URL, attribute, and value
-      delete step.url;
-      delete step.attribute;
-      delete step.value;
+    if (actionName === 'page_navigate') {
+      step.action.url = step.action.url || '';
+      delete step.action.attribute;
+      delete step.action.value;
+    } else if (actionName === 'element_get_attribute') {
+      step.action.attribute = step.action.attribute || '';
+      delete step.action.url;
+      delete step.action.value;
+    } else if (actionName === 'element_input') {
+      step.action.value = step.action.value || '';
+      delete step.action.attribute;
+      delete step.action.url;
+    } else {
+      delete step.action.url;
+      delete step.action.attribute;
+      delete step.action.value;
     }
     this.emitChanges();
   }
 
   updateLoopType(index: number, loopType: 'fixed_iterations' | 'until_condition') {
-    const step = this.steps[index] as Loop;
-    step.loopType = loopType;
+    const step = this.steps[index];
+    if (step.step_type !== 'loop' || !step.loop) return;
+    step.loop.loop_type = loopType;
 
-    const defaultSelector = this.mapDomElementToSelector(this.domElements[0]);
+    const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
 
     if (loopType === 'fixed_iterations') {
-      delete step.condition;
-      step.iterations = step.iterations || 1;
+      delete step.loop.condition_element_selector;
+      delete step.loop.condition_type;
+      delete step.loop.condition_element_attribute;
+      delete step.loop.condition_attribute_value;
+      step.loop.iterations_count = step.loop.iterations_count || 1;
     } else { // 'until_condition'
-      step.condition = step.condition || {
-        conditionType: 'element_found',
-        selector: defaultSelector
-      };
-      delete step.iterations;
+      delete step.loop.iterations_count;
+      step.loop.condition_element_selector = step.loop.condition_element_selector || defaultSelector;
+      step.loop.condition_type = step.loop.condition_type || 'element_found';
     }
     this.emitChanges();
   }
 
-  onNestedStepsChange(parentStep: Step, branch: 'ifTrue' | 'ifFalse' | 'steps', updatedSteps: Step[]) {
-    if (parentStep.type === 'condition' && (branch === 'ifTrue' || branch === 'ifFalse')) {
-      parentStep[branch] = updatedSteps as Action[];
-    } else if ((parentStep.type === 'loop' || (parentStep.type === 'action' && (parentStep as Action).name === 'sequence')) && branch === 'steps') {
-      parentStep.steps = updatedSteps as Action[];
+  onNestedStepsChange(parentStep: Step, branch: 'if_true_child_steps' | 'if_false_child_steps' | 'child_steps', updatedSteps: Step[]) {
+    if (parentStep.step_type === 'condition' && parentStep.condition && (branch === 'if_true_child_steps' || branch === 'if_false_child_steps')) {
+      if (parentStep.condition) {
+        parentStep.condition[branch] = updatedSteps;
+      }
+    } else if (parentStep.step_type === 'loop' && parentStep.loop && branch === 'child_steps') {
+      if (parentStep.loop) {
+        parentStep.loop.child_steps = updatedSteps;
+      }
     }
+    this.reorderSteps();
     this.emitChanges();
   }
 
@@ -290,7 +346,6 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
 
   exportToJson() {
     console.log('Steps data before export:', this.steps);
-
     try {
       const jsonString = JSON.stringify(this.steps, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
@@ -310,21 +365,42 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     this.stepsChange.emit([...this.steps]);
   }
 
+  private reorderSteps() {
+    // Reorder all steps based on their order and nested structure
+    this.steps.sort((a, b) => a.order - b.order);
+    let currentOrder = 1;
+    this.steps.forEach(step => {
+      step.order = currentOrder++;
+      if (step.condition) {
+        if (step.condition.if_true_child_steps) step.condition.if_true_child_steps.forEach(s => s.order = currentOrder++);
+        if (step.condition.if_false_child_steps) step.condition.if_false_child_steps.forEach(s => s.order = currentOrder++);
+      }
+      if (step.loop && step.loop.child_steps) {
+        step.loop.child_steps.forEach(s => s.order = currentOrder++);
+      }
+    });
+  }
+
   getStepLabel(step: Step): string {
-    if (step.type === 'action') {
-      const actionName = this.ACTION_NAME_CHOICES.find(choice => choice.value === (step as Action).name)?.label;
+    if (step.step_type === 'action' && step.action) {
+      const actionName = this.ACTION_NAME_CHOICES.find(choice => choice.value === step.action?.action_name)?.label;
       return `Action: ${actionName || 'Unnamed'}`;
     }
-    if (step.type === 'condition') return `Condition: ${((step as Condition).conditionType || 'Unnamed')}`;
-    return `Loop: ${((step as Loop).loopType || 'Unnamed')}`;
+    if (step.step_type === 'condition' && step.condition) {
+      return `Condition: ${step.condition.condition_type || 'Unnamed'}`;
+    }
+    if (step.step_type === 'loop' && step.loop) {
+      return `Loop: ${step.loop.loop_type || 'Unnamed'}`;
+    }
+    return 'Unnamed Step';
   }
 
   getStepClasses(step: Step): { [key: string]: boolean } {
     return {
-      'action': step.type === 'action',
-      'condition': step.type === 'condition',
-      'loop': step.type === 'loop',
-      'bg-purple-50': step.type === 'action'
+      'action': step.step_type === 'action',
+      'condition': step.step_type === 'condition',
+      'loop': step.step_type === 'loop',
+      'bg-purple-50': step.step_type === 'action'
     };
   }
 

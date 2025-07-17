@@ -1,0 +1,8 @@
+<div class="workflow-header">
+  <div class="workflow-info">
+    <h2 class="workflow-name">{{ workflow.name || 'Untitled Workflow' }}</h2>
+    <p class="workflow-date">Created on: {{ workflow.created_at | date:'mediumDate' }}</p>
+  </div>
+</div>
+
+<app-workflow-process-viewer [steps]="workflow.steps"></app-workflow-process-viewer>

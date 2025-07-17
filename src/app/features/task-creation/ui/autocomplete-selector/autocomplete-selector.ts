@@ -20,8 +20,8 @@ import { DomElement } from '../../models/dom-element.model';
 })
 export class AutocompleteSelectorComponent implements AfterViewInit {
   @Input() domElements: DomElement[] = [];
-  @Input() selectedSelector: number = -1;
-  @Output() selectedSelectorChange = new EventEmitter<number>();
+  @Input() selectedSelector: number | undefined = undefined; // Allow undefined
+  @Output() selectedSelectorChange = new EventEmitter<number | undefined>();
 
   @ViewChild('input') input!: ElementRef<HTMLInputElement>;
 
@@ -32,6 +32,11 @@ export class AutocompleteSelectorComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.filterElements();
+    // Sync initial selectedSelector with input if valid
+    const selectedElement = this.domElements.find(el => el.id === this.selectedSelector);
+    if (selectedElement) {
+      this.searchQuery = selectedElement.tag_name;
+    }
   }
 
   filterElements() {
@@ -47,11 +52,12 @@ export class AutocompleteSelectorComponent implements AfterViewInit {
     this.selectedIndex = -1;
     if (this.searchQuery && this.filteredElements.length) {
       this.showList = true;
+    } else {
+      this.showList = false;
     }
   }
 
   selectElement(element: DomElement) {
-    console.log(element)
     this.selectedSelector = element.id;
     this.selectedSelectorChange.emit(element.id);
     this.searchQuery = element.tag_name;
@@ -62,7 +68,11 @@ export class AutocompleteSelectorComponent implements AfterViewInit {
   onBlur() {
     setTimeout(() => {
       this.showList = false;
-      this.searchQuery = '';
+      if (this.selectedIndex < 0 && !this.filteredElements.some(el => el.id === this.selectedSelector)) {
+        this.selectedSelector = undefined; // Reset if no valid selection
+        this.selectedSelectorChange.emit(undefined);
+      }
+      this.searchQuery = this.domElements.find(el => el.id === this.selectedSelector)?.tag_name || '';
       this.selectedIndex = -1;
     }, 200);
   }
@@ -107,8 +117,6 @@ export class AutocompleteSelectorComponent implements AfterViewInit {
       });
     }
   }
-
-
 
   getIconForTag(tagName: string): string {
     switch (tagName.toLowerCase()) {

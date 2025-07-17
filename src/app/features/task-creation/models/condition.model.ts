@@ -1,12 +1,12 @@
-import { Action } from './action.model';
+import { Step } from "./step.model";
 
 export interface Condition {
-  type: 'condition';
-  conditionType?: 'element_found' | 'element_not_found' | 'element_attribute_equals' | 'element_attribute_not_equals';
-  selector: number;
-  attribute?: string;
-  value?: string;
-  ifTrue: Action[];
-  ifFalse: Action[];
-  tag?: string;
+  step?: number;
+  condition_type: string;
+  selector: number;  // DomElement ID
+  attribute?: string | null;
+  value?: string | null;
+
+  if_true_child_steps?: Step[] | null;
+  if_false_child_steps?: Step[] | null;
 }

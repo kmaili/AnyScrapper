@@ -1,0 +1,55 @@
+<div class="workflow-tree">
+  <ng-container *ngFor="let step of steps">
+    <div class="step-node">
+
+      <!-- Action Node -->
+      <div *ngIf="isAction(step)" class="step-header action-step">
+        <span class="step-status" [ngClass]="getStatusClass(step)">
+          <span class="status-icon"></span>
+        </span>
+        <i class="pi pi-bolt step-icon text-primary"></i>
+        <span class="step-tag">{{ step.tag || 'Unnamed Action' }}</span>
+      </div>
+
+      <!-- Loop / Condition Nodes -->
+      <div *ngIf="!isAction(step)" class="step-header" (click)="toggleStep(step)">
+        <span class="chevron" [class.open]="isExpanded(step)">&#8250;</span>
+        <span class="step-status" [ngClass]="getStatusClass(step)">
+          <span class="status-icon"></span>
+        </span>
+
+        <i
+          [ngClass]="[
+            'step-icon',
+            isCondition(step) ? 'pi pi-share-alt' :
+            isLoop(step) ? 'pi pi-sync' :
+            'pi pi-question-circle'
+          ]"
+        ></i>
+
+
+        <span class="step-tag">{{ step.tag || 'Unnamed Step' }}</span>
+      </div>
+
+      <div class="children" *ngIf="isExpanded(step) && !isAction(step)">
+        <!-- Loop -->
+        <div *ngIf="isLoop(step)">
+          <app-workflow-process-viewer [isRoot]="false" [steps]="step.loop!.child_steps!" [stepStatuses]="stepStatuses"></app-workflow-process-viewer>
+        </div>
+
+        <!-- Condition -->
+        <div *ngIf="isCondition(step)">
+          <div class="branch">
+            <div class="branch-label">If True:</div>
+            <app-workflow-process-viewer [isRoot]="false" [steps]="conditionIsTrueStep(step)" [stepStatuses]="stepStatuses"></app-workflow-process-viewer>
+          </div>
+          <div class="branch">
+            <div class="branch-label">If False:</div>
+            <app-workflow-process-viewer [isRoot]="false" [steps]="conditionIsFalseStep(step)" [stepStatuses]="stepStatuses"></app-workflow-process-viewer>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+</div>

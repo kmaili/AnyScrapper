@@ -1,8 +1,8 @@
 // src/app/features/task-management/task-management.routes.ts
 import { Routes } from '@angular/router';
 import { TaskListPageComponent } from './pages/task-list-page/task-list-page';
-import { TaskDetailsPageComponent } from './pages/task-details-page/task-details-page';
 import { authGuard } from '../../core/auth/auth-guard';
+import { WorkflowExecutionPage } from './pages/workflow-execution-page/workflow-execution-page';
 
 export const TASK_MANAGEMENT_ROUTES: Routes = [
   {
@@ -12,7 +12,7 @@ export const TASK_MANAGEMENT_ROUTES: Routes = [
   },
   {
     path: ':id', // Route pour voir les détails d'une tâche spécifique, ex: /tasks/123
-    component: TaskDetailsPageComponent
+    component: WorkflowExecutionPage,
   },
   // Ajoutez d'autres routes spécifiques à la gestion des tâches ici
 ];

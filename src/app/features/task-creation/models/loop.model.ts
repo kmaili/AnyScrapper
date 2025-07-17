@@ -1,10 +1,13 @@
-import { Action } from './action.model';
+import { Step } from "./step.model";
 
 export interface Loop {
-  type: 'loop';
-  loopType?: 'fixed_iterations' | 'until_condition';
-  iterations?: number;
-  condition?: { conditionType?: string; selector: number; attribute?: string; value?: string };
-  steps: Action[];
-  tag?: string;
+  step?: number;
+  loop_type: string;
+  iterations_count?: number | null;
+  condition_element_selector?: number | null;
+  condition_type?: string | null;
+  condition_element_attribute?: string | null;
+  condition_attribute_value?: string | null;
+
+  child_steps?: Step[];  // IMPORTANT: nested steps inside this loop
 }
