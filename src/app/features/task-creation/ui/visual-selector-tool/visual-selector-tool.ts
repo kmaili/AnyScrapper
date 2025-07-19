@@ -5,15 +5,14 @@ import { Subscription } from 'rxjs';
 import { DomElementsSelectorWsService } from '../../data-access/dom-elements-selector/real-time-dom-elemnts-selector.service';
 import { DomElement } from '../../models/dom-element.model';
 import { HttpClientModule } from '@angular/common/http';
-import { FilterActionsPipe } from '../../pipes/filter-actions-pipe';
 import { Workflow } from '../../models/workflow.model';
 import { Step } from '../../models/step.model';
-import { CustomSelectComponent, SelectOption } from '../custom-select/custom-select';
+import { SelectOption, CustomSelectComponent } from '../custom-select/custom-select';
 
 @Component({
   selector: 'app-visual-selector-tool',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule, FilterActionsPipe, CustomSelectComponent],
+  imports: [CommonModule, FormsModule, HttpClientModule, CustomSelectComponent],
   templateUrl: './visual-selector-tool.html',
   styleUrls: ['./visual-selector-tool.css']
 })
@@ -35,43 +34,52 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   isExpanded: { [key: number]: boolean } = {};
 
   ACTION_TYPE_CHOICES: SelectOption[] = [
-    { value: 'on_element', label: 'On Element', icon: 'touch_app' },
-    { value: 'on_page', label: 'On Page', icon: 'web' },
+    { value: 'data_collection', label: 'Data Collection', icon: 'data_exploration' },
+    { value: 'interaction', label: 'Interaction', icon: 'touch_app' },
   ];
 
-  ACTION_NAME_CHOICES: SelectOption[] = [
-    { value: 'element_click', label: 'Element Click', icon: 'mouse' },
-    { value: 'element_right_click', label: 'Element Right Click', icon: 'mouse' },
-    { value: 'element_double_click', label: 'Element Double Click', icon: 'double_arrow' },
-    { value: 'element_hover', label: 'Element Hover', icon: 'pan_tool' },
-    { value: 'element_input_text', label: 'Element Input Text', icon: 'edit' },
-    { value: 'element_clear_input', label: 'Element Clear Input', icon: 'clear' },
-    { value: 'scroll_to_element', label: 'Scroll to Element', icon: 'vertical_align_center' },
-    { value: 'element_text', label: 'Element Text Extraction', icon: 'text_fields' },
-    { value: 'element_input', label: 'Element Input', icon: 'input' },
-    { value: 'element_long_press', label: 'Element Long Press', icon: 'touch_app' },
-    { value: 'element_inner_html', label: 'Element Inner HTML', icon: 'code' },
-    { value: 'element_get_attribute', label: 'Element Get Attribute', icon: 'description' },
-    { value: 'page_scroll_up', label: 'Page Scroll Up', icon: 'arrow_upward' },
-    { value: 'page_scroll_down', label: 'Page Scroll Down', icon: 'arrow_downward' },
-    { value: 'page_refresh', label: 'Page Refresh', icon: 'refresh' },
-    { value: 'page_navigate', label: 'Page Navigate', icon: 'open_in_new' },
-    { value: 'page_go_back', label: 'Page Go Back', icon: 'arrow_back' },
-    { value: 'page_go_forward', label: 'Page Go Forward', icon: 'arrow_forward' },
+  INTERACTION_ACTION_CHOICES: SelectOption[] = [
+    { value: 'element_click', label: 'Element Click', icon: 'mouse', action_type: 'interaction' },
+    { value: 'element_right_click', label: 'Element Right Click', icon: 'mouse', action_type: 'interaction' },
+    { value: 'element_double_click', label: 'Element Double Click', icon: 'double_arrow', action_type: 'interaction' },
+    { value: 'element_hover', label: 'Element Hover', icon: 'pan_tool', action_type: 'interaction' },
+    { value: 'element_input_text', label: 'Element Input Text', icon: 'edit', action_type: 'interaction' },
+    { value: 'element_clear_input', label: 'Element Clear Input', icon: 'clear', action_type: 'interaction' },
+    { value: 'element_long_press', label: 'Element Long Press', icon: 'touch_app', action_type: 'interaction' },
+    { value: 'page_scroll_up', label: 'Page Scroll Up', icon: 'arrow_upward', action_type: 'interaction' },
+    { value: 'page_scroll_down', label: 'Page Scroll Down', icon: 'arrow_downward', action_type: 'interaction' },
+    { value: 'page_refresh', label: 'Page Refresh', icon: 'refresh', action_type: 'interaction' },
+    { value: 'page_navigate', label: 'Page Navigate', icon: 'open_in_new', action_type: 'interaction' },
+    { value: 'page_go_back', label: 'Page Go Back', icon: 'arrow_back', action_type: 'interaction' },
+    { value: 'page_go_forward', label: 'Page Go Forward', icon: 'arrow_forward', action_type: 'interaction' },
+    { value: 'scroll_to_element', label: 'Scroll to Element', icon: 'vertical_align_center', action_type: 'interaction' },
+  ];
+
+  DATA_COLLECTION_ACTION_CHOICES: SelectOption[] = [
+    { value: 'element_text', label: 'Element Text Extraction', icon: 'text_fields', action_type: 'data_collection' },
+    { value: 'element_get_inner_html', label: 'Element Get Inner HTML', icon: 'code', action_type: 'data_collection' },
+    { value: 'element_get_attribute_value', label: 'Element Get Attribute Value', icon: 'description', action_type: 'data_collection' },
+    { value: 'element_check_attribute_value_equals', label: 'Element Check Attribute Value Equals', icon: 'check_circle', action_type: 'data_collection' },
+    { value: 'element_check_attribute_value_not_equals', label: 'Element Check Attribute Value Not Equals', icon: 'not_equal', action_type: 'data_collection' },
+    { value: 'element_check_attribute_exists', label: 'Element Check Attribute Exists', icon: 'check_circle_outline', action_type: 'data_collection' },
+    { value: 'element_check_attribute_value_contains', label: 'Element Check Attribute Value Contains', icon: 'search', action_type: 'data_collection' },
+    { value: 'element_check_attribute_value_starts_with', label: 'Element Check Attribute Value Starts With', icon: 'format_color_text', action_type: 'data_collection' },
+    { value: 'element_check_attribute_value_ends_with', label: 'Element Check Attribute Value Ends With', icon: 'format_color_text', action_type: 'data_collection' },
   ];
 
   CONDITION_TYPE_CHOICES: SelectOption[] = [
     { value: 'element_found', label: 'Element Found', icon: 'visibility' },
     { value: 'element_not_found', label: 'Element Not Found', icon: 'visibility_off' },
+    { value: 'element_text_equals', label: 'Element Text Equals', icon: 'compare_arrows' },
+    { value: 'element_text_contains', label: 'Element Text Contains', icon: 'search' },
     { value: 'element_attribute_equals', label: 'Element Attribute Equals', icon: 'compare_arrows' },
     { value: 'element_attribute_not_equals', label: 'Element Attribute Not Equals', icon: 'not_equal' },
-    { value: 'element_visible', label: 'Element Visible', icon: 'eye' },
-    { value: 'element_text_equals', label: 'Element Text Equals', icon: 'format_textdirection_l_to_r' },
-    { value: 'element_text_contains', label: 'Element Text Contains', icon: 'search' },
-    { value: 'element_attribute_contains', label: 'Element Attribute Contains', icon: 'filter_list' },
-    { value: 'page_url_contains', label: 'Page URL Contains', icon: 'link' },
-    { value: 'page_title_contains', label: 'Page Title Contains', icon: 'title' },
+    { value: 'element_attribute_exists', label: 'Element Attribute Exists', icon: 'check_circle_outline' },
+    { value: 'element_attribute_contains', label: 'Element Attribute Contains', icon: 'search' },
+    { value: 'element_attribute_starts_with', label: 'Element Attribute Starts With', icon: 'format_color_text' },
+    { value: 'element_attribute_ends_with', label: 'Element Attribute Ends With', icon: 'format_color_text' },
   ];
+  ALL_ACTION_CHOICES: SelectOption[] = [...this.INTERACTION_ACTION_CHOICES, ...this.DATA_COLLECTION_ACTION_CHOICES];
 
   constructor(private wsService: DomElementsSelectorWsService) {}
 
@@ -85,8 +93,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
           workflow: 1,
           action: {
             step: 1,
-            action_type: 'on_page',
-            action_name: 'page_scroll_down'
+            action_type: 'interaction',
+            action_name: 'page_scroll_down',
           }
         }
       ];
@@ -125,8 +133,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
         workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
         action: {
           step: newId,
-          action_type: 'on_page',
-          action_name: 'page_scroll_down'
+          action_type: 'interaction',
+          action_name: 'page_scroll_down',
         }
       };
     } else if (type === 'condition') {
@@ -203,8 +211,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       parent_loop: parentStep.step_type === 'loop' ? parentStep.id : parentStep.parent_loop,
       action: {
         step: newId,
-        action_type: 'on_page',
-        action_name: 'page_scroll_down'
+        action_type: 'interaction',
+        action_name: 'page_scroll_down',
       }
     };
 
@@ -239,8 +247,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
         workflow: originalStep.workflow,
         action: {
           step: newId,
-          action_type: 'on_page',
-          action_name: 'page_scroll_down'
+          action_type: 'interaction',
+          action_name: 'page_scroll_down',
         }
       };
     } else if (stepType === 'condition') {
@@ -278,21 +286,21 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   updateActionType(index: number, actionType: string) {
     const step = this.steps[index];
     if (step.step_type !== 'action' || !step.action) return;
-    step.action.action_type = actionType;
+    step.action.action_type = actionType as 'interaction' | 'data_collection';
 
     const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
 
-    if (actionType === 'on_page') {
+    if (actionType === 'interaction') {
       step.action.action_name = 'page_scroll_down';
       step.action.selector = null;
       delete step.action.attribute;
-      delete step.action.value;
+      delete step.action.expected_value;
       delete step.action.url;
-    } else if (actionType === 'on_element') {
+    } else if (actionType === 'data_collection') {
       step.action.action_name = 'element_text';
       step.action.selector = defaultSelector;
       delete step.action.attribute;
-      delete step.action.value;
+      delete step.action.expected_value;
       delete step.action.url;
     }
     this.emitChanges();
@@ -303,26 +311,33 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     if (step.step_type !== 'action' || !step.action) return;
     step.action.action_name = actionName;
 
+    const action_type = this.getActionType(actionName);
+    step.action.action_type = action_type;
+
     if (actionName === 'page_navigate') {
       step.action.url = step.action.url || '';
       delete step.action.attribute;
-      delete step.action.value;
-    } else if (actionName === 'element_get_attribute') {
+      delete step.action.expected_value;
+    } else if (actionName === 'element_get_attribute_value' || actionName.includes('element_check_attribute')) {
       step.action.attribute = step.action.attribute || '';
       delete step.action.url;
-      delete step.action.value;
-    } else if (actionName === 'element_input_text' || actionName === 'element_input') {
-      step.action.value = step.action.value || '';
+      if (actionName.includes('element_check_attribute_value_')) {
+        step.action.expected_value = step.action.expected_value || '';
+      } else {
+        delete step.action.expected_value;
+      }
+    } else if (actionName === 'element_input_text') {
+      step.action.expected_value = step.action.expected_value || '';
       delete step.action.attribute;
       delete step.action.url;
     } else if (actionName === 'element_clear_input' || actionName === 'element_hover') {
       delete step.action.attribute;
-      delete step.action.value;
+      delete step.action.expected_value;
       delete step.action.url;
     } else {
       delete step.action.url;
       delete step.action.attribute;
-      delete step.action.value;
+      delete step.action.expected_value;
     }
     this.emitChanges();
   }
@@ -335,8 +350,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
 
     if (loopType === 'fixed_iterations') {
-      delete step.loop.condition_element_selector;
       delete step.loop.condition_type;
+      delete step.loop.condition_element_selector;
       delete step.loop.condition_element_attribute;
       delete step.loop.condition_attribute_value;
       step.loop.iterations_count = step.loop.iterations_count || 1;
@@ -369,7 +384,13 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   exportToJson() {
     console.log('Steps data before export:', this.steps);
     try {
-      const jsonString = JSON.stringify(this.steps, null, 2);
+      const exportableSteps = this.steps.map(step => ({
+        ...step,
+        action: step.action ? { ...step.action, extractedData: step.action.result } : undefined,
+        condition: step.condition ? { ...step.condition } : undefined,
+        loop: step.loop ? { ...step.loop } : undefined
+      }));
+      const jsonString = JSON.stringify({ workflow: this.initialized_workflow, steps: exportableSteps }, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -404,7 +425,7 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
 
   getStepLabel(step: Step): string {
     if (step.step_type === 'action' && step.action) {
-      const actionName = this.ACTION_NAME_CHOICES.find(choice => choice.value === step.action?.action_name)?.label;
+      const actionName = this.getAllActionChoices().find(choice => choice.value === step.action?.action_name)?.label;
       return `Action: ${actionName || 'Unnamed'}`;
     }
     if (step.step_type === 'condition' && step.condition) {
@@ -444,5 +465,14 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       startUrl: this.initialized_workflow.startUrl,
       steps: this.steps
     });
+  }
+
+  private getActionType(actionName: string): 'interaction' | 'data_collection' {
+    const choice = this.getAllActionChoices().find(c => c.value === actionName);
+    return choice?.action_type || 'interaction';
+  }
+
+  private getAllActionChoices(): SelectOption[] {
+    return this.ALL_ACTION_CHOICES;
   }
 }

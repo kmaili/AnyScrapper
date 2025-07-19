@@ -1,4 +1,3 @@
-// custom-select.component.ts
 import { Component, Input, Output, EventEmitter, OnInit, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +6,7 @@ export interface SelectOption {
   value: any;
   label: string;
   icon: string;
+  action_type?: 'interaction' | 'data_collection';
 }
 
 @Component({
@@ -260,6 +260,7 @@ export class CustomSelectComponent implements OnInit {
   @Input() options: SelectOption[] = [];
   @Input() placeholder: string = 'Select an option';
   @Input() searchable: boolean = true;
+  @Input() categoryFilter?: 'interaction' | 'data_collection'; // New input to filter by category
   @Output() valueChange = new EventEmitter<any>();
 
   isOpen = false;
@@ -270,7 +271,7 @@ export class CustomSelectComponent implements OnInit {
   constructor(private elementRef: ElementRef) {}
 
   ngOnInit() {
-    this.filteredOptions = [...this.options];
+    this.filteredOptions = this.filterOptions([...this.options]);
     this.updateSelectedOption();
   }
 
@@ -280,21 +281,21 @@ export class CustomSelectComponent implements OnInit {
   }
 
   private updateSelectedOption() {
-    this.selectedOption = this.options.find(option => option.value === this.value) || null;
+    this.selectedOption = this.options.find(option => option.value === this.value && (!this.categoryFilter || option.action_type === this.categoryFilter)) || null;
   }
 
   toggleDropdown() {
     this.isOpen = !this.isOpen;
     if (!this.isOpen) {
       this.searchTerm = '';
-      this.filteredOptions = [...this.options];
+      this.filteredOptions = this.filterOptions([...this.options]);
     }
   }
 
   closeDropdown() {
     this.isOpen = false;
     this.searchTerm = '';
-    this.filteredOptions = [...this.options];
+    this.filteredOptions = this.filterOptions([...this.options]);
   }
 
   selectOption(option: SelectOption) {
@@ -306,11 +307,11 @@ export class CustomSelectComponent implements OnInit {
 
   onSearch() {
     if (!this.searchTerm.trim()) {
-      this.filteredOptions = [...this.options];
+      this.filteredOptions = this.filterOptions([...this.options]);
     } else {
-      this.filteredOptions = this.options.filter(option =>
+      this.filteredOptions = this.filterOptions(this.options.filter(option =>
         option.label.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
+      ));
     }
   }
 
@@ -330,5 +331,9 @@ export class CustomSelectComponent implements OnInit {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.closeDropdown();
     }
+  }
+
+  private filterOptions(options: SelectOption[]): SelectOption[] {
+    return this.categoryFilter ? options.filter(option => !option.action_type || option.action_type === this.categoryFilter) : options;
   }
 }

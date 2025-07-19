@@ -51,46 +51,67 @@
             </app-custom-select>
           </div>
 
-          <div class="form-group">
+          <div class="form-group" *ngIf="step.action!.action_type === 'interaction'">
             <label class="form-label">
-              <span class="material-icons">task_alt</span> Action Name
+              <span class="material-icons">task_alt</span> Interaction Action
             </label>
             <app-custom-select
               [value]="step.action!.action_name"
-              [options]="step.action!.action_type === 'on_page' ? (ACTION_NAME_CHOICES | filterActions:'on_page') : (ACTION_NAME_CHOICES | filterActions:'on_element')"
-              placeholder="Select Action Name"
+              [options]="INTERACTION_ACTION_CHOICES"
+              [categoryFilter]="'interaction'"
+              placeholder="Select Interaction Action"
               (valueChange)="updateActionName(i, $event)">
             </app-custom-select>
           </div>
 
-          <div *ngIf="step.action!.action_type === 'on_page' && step.action!.action_name === 'page_navigate'" class="form-group">
+          <div class="form-group" *ngIf="step.action!.action_type === 'data_collection'">
+            <label class="form-label">
+              <span class="material-icons">data_exploration</span> Data Collection Action
+            </label>
+            <app-custom-select
+              [value]="step.action!.action_name"
+              [options]="DATA_COLLECTION_ACTION_CHOICES"
+              [categoryFilter]="'data_collection'"
+              placeholder="Select Data Collection Action"
+              (valueChange)="updateActionName(i, $event)">
+            </app-custom-select>
+          </div>
+
+          <div *ngIf="step.action!.action_type === 'interaction' && step.action!.action_name === 'page_navigate'" class="form-group">
             <label class="form-label">
               <span class="material-icons">link</span> URL
             </label>
             <input [(ngModel)]="step.action!.url" class="form-control" placeholder="https://example.com">
           </div>
 
-          <div *ngIf="step.action!.action_type === 'on_element'" class="form-group">
+          <div *ngIf="step.action!.action_type === 'data_collection'" class="form-group">
             <label class="form-label">
               <span class="material-icons">find_in_page</span> Selector
             </label>
             <select [(ngModel)]="step.action!.selector" class="form-control">
-                <option *ngFor="let element of domElements" [value]="element.id">{{ element.tag_name }} - {{ element.attributes | json }}</option>
+              <option *ngFor="let element of domElements" [value]="element.id">{{ element.tag_name }} - {{ element.attributes | json }}</option>
             </select>
           </div>
 
-          <div *ngIf="step.action!.action_type === 'on_element' && step.action!.action_name === 'element_get_attribute'" class="form-group">
+          <div *ngIf="step.action!.action_type === 'data_collection' && (step.action!.action_name === 'element_get_attribute_value' || step.action!.action_name.includes('element_check_attribute'))" class="form-group">
             <label class="form-label">
               <span class="material-icons">description</span> Attribute Name
             </label>
             <input [(ngModel)]="step.action!.attribute" class="form-control" placeholder="e.g., href, src, class, id">
           </div>
 
-          <div *ngIf="step.action!.action_type === 'on_element' && (step.action!.action_name === 'element_input_text' || step.action!.action_name === 'element_input')" class="form-group">
+          <div *ngIf="step.action!.action_type === 'data_collection' && (step.action!.action_name === 'element_input_text')" class="form-group">
             <label class="form-label">
               <span class="material-icons">input</span> Input Value
             </label>
-            <input [(ngModel)]="step.action!.value" class="form-control" placeholder="Text to input">
+            <input [(ngModel)]="step.action!.expected_value" class="form-control" placeholder="Text to input">
+          </div>
+
+          <div *ngIf="step.action!.action_type === 'data_collection' && step.action!.action_name.includes('element_check_attribute_value_')" class="form-group">
+            <label class="form-label">
+              <span class="material-icons">compare_arrows</span> Expected Value
+            </label>
+            <input [(ngModel)]="step.action!.expected_value" class="form-control" placeholder="Expected value to check">
           </div>
         </ng-container>
 
