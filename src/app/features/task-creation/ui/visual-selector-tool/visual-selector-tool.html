@@ -1,5 +1,5 @@
-<div class="header">
-  start url: {{ initialized_workflow.startUrl }}
+<div class="header" *ngIf="isRoot">
+  {{ initialized_workflow.startUrl }}
 </div>
 <div class="visual-selector-container">
   <div class="content">
@@ -30,11 +30,12 @@
           <label class="form-label">
             <span class="material-icons">category</span> Type
           </label>
-          <select [(ngModel)]="step.step_type" class="form-control" (ngModelChange)="updateStepType(i, $event)">
-            <option value="action">Action</option>
-            <option value="condition">Condition</option>
-            <option value="loop">Loop</option>
-          </select>
+          <app-custom-select
+            [value]="step.step_type"
+            [options]="[{ value: 'action', label: 'Action', icon: 'play_arrow' }, { value: 'condition', label: 'Condition', icon: 'rule' }, { value: 'loop', label: 'Loop', icon: 'loop' }]"
+            placeholder="Select Step Type"
+            (valueChange)="updateStepType(i, $event)">
+          </app-custom-select>
         </div>
 
         <ng-container *ngIf="step.step_type === 'action' && step.action">
@@ -42,23 +43,24 @@
             <label class="form-label">
               <span class="material-icons">settings</span> Action Type
             </label>
-            <select [(ngModel)]="step.action!.action_type" class="form-control" (ngModelChange)="updateActionType(i, $event)">
-              <option *ngFor="let typeChoice of ACTION_TYPE_CHOICES" [value]="typeChoice.value">{{ typeChoice.label }}</option>
-            </select>
+            <app-custom-select
+              [value]="step.action!.action_type"
+              [options]="ACTION_TYPE_CHOICES"
+              placeholder="Select Action Type"
+              (valueChange)="updateActionType(i, $event)">
+            </app-custom-select>
           </div>
 
           <div class="form-group">
             <label class="form-label">
               <span class="material-icons">task_alt</span> Action Name
             </label>
-            <select [(ngModel)]="step.action!.action_name" class="form-control" (ngModelChange)="updateActionName(i, $event)">
-              <ng-container *ngIf="step.action!.action_type === 'on_page'">
-                <option *ngFor="let nameChoice of ACTION_NAME_CHOICES | filterActions:'on_page'" [value]="nameChoice.value">{{ nameChoice.label }}</option>
-              </ng-container>
-              <ng-container *ngIf="step.action!.action_type === 'on_element'">
-                <option *ngFor="let nameChoice of ACTION_NAME_CHOICES | filterActions:'on_element'" [value]="nameChoice.value">{{ nameChoice.label }}</option>
-              </ng-container>
-            </select>
+            <app-custom-select
+              [value]="step.action!.action_name"
+              [options]="step.action!.action_type === 'on_page' ? (ACTION_NAME_CHOICES | filterActions:'on_page') : (ACTION_NAME_CHOICES | filterActions:'on_element')"
+              placeholder="Select Action Name"
+              (valueChange)="updateActionName(i, $event)">
+            </app-custom-select>
           </div>
 
           <div *ngIf="step.action!.action_type === 'on_page' && step.action!.action_name === 'page_navigate'" class="form-group">
@@ -73,7 +75,7 @@
               <span class="material-icons">find_in_page</span> Selector
             </label>
             <select [(ngModel)]="step.action!.selector" class="form-control">
-              <option *ngFor="let element of domElements" [value]="element.id">{{ element.tag_name }} - {{ element.attributes | json }}</option>
+                <option *ngFor="let element of domElements" [value]="element.id">{{ element.tag_name }} - {{ element.attributes | json }}</option>
             </select>
           </div>
 
@@ -84,7 +86,7 @@
             <input [(ngModel)]="step.action!.attribute" class="form-control" placeholder="e.g., href, src, class, id">
           </div>
 
-          <div *ngIf="step.action!.action_type === 'on_element' && step.action!.action_name === 'element_input'" class="form-group">
+          <div *ngIf="step.action!.action_type === 'on_element' && (step.action!.action_name === 'element_input_text' || step.action!.action_name === 'element_input')" class="form-group">
             <label class="form-label">
               <span class="material-icons">input</span> Input Value
             </label>
@@ -97,19 +99,21 @@
             <label class="form-label">
               <span class="material-icons">rule</span> Condition Type
             </label>
-            <select [(ngModel)]="step.condition!.condition_type" class="form-control">
-              <option value="element_found">Element Found</option>
-              <option value="element_not_found">Element Not Found</option>
-              <option value="element_attribute_equals">Element Attribute Equals</option>
-              <option value="element_attribute_not_equals">Element Attribute Not Equals</option>
-            </select>
+            <app-custom-select
+              [value]="step.condition!.condition_type"
+              [options]="CONDITION_TYPE_CHOICES"
+              placeholder="Select Condition Type"
+              (valueChange)="step.condition!.condition_type = $event; emitChanges()">
+            </app-custom-select>
           </div>
 
           <div class="form-group">
             <label class="form-label">
               <span class="material-icons">find_in_page</span> Selector
             </label>
-            <app-autocomplete-selector [(selectedSelector)]="step.condition!.selector" [domElements]="domElements"></app-autocomplete-selector>
+            <select [(ngModel)]="step.condition!.selector" class="form-control">
+              <option *ngFor="let element of domElements" [value]="element.id">{{ element.tag_name }} - {{ element.attributes | json }}</option>
+            </select>
           </div>
 
           <div *ngIf="step.condition!.condition_type?.includes('attribute_')" class="form-group">
@@ -119,27 +123,21 @@
             <input [(ngModel)]="step.condition!.attribute" class="form-control" placeholder="class, id, data-*...">
           </div>
 
-          <div *ngIf="step.condition!.condition_type?.includes('attribute_')" class="form-group">
+          <div *ngIf="step.condition!.condition_type?.includes('attribute_') || step.condition!.condition_type === 'element_text_equals' || step.condition!.condition_type === 'element_text_contains'" class="form-group">
             <label class="form-label">
-              <span class="material-icons">compare_arrows</span> Attribute Value
+              <span class="material-icons">compare_arrows</span> Expected Value
             </label>
             <input [(ngModel)]="step.condition!.value" class="form-control" placeholder="Expected value">
           </div>
 
           <div class="nested-steps">
             <div class="nested-title"><span class="material-icons">check_circle</span> If True</div>
-            <app-visual-selector-tool *ngIf="step.condition?.if_true_child_steps" [steps]="step.condition!.if_true_child_steps!" (stepsChange)="onNestedStepsChange(step, 'if_true_child_steps', $event)" [initialized_workflow]="initialized_workflow"></app-visual-selector-tool>
-            <button *ngIf="step.condition?.if_true_child_steps" (click)="addNestedStep(step, 'if_true_child_steps', i)" class="btn btn-icon btn-add-nested" title="Add Nested Step">
-              <span class="material-icons">add</span>
-            </button>
+            <app-visual-selector-tool [isRoot]="false" *ngIf="step.condition?.if_true_child_steps" [steps]="step.condition!.if_true_child_steps!" (stepsChange)="onNestedStepsChange(step, 'if_true_child_steps', $event)" [initialized_workflow]="initialized_workflow"></app-visual-selector-tool>
           </div>
 
           <div class="nested-steps">
             <div class="nested-title"><span class="material-icons">cancel</span> If False</div>
-            <app-visual-selector-tool *ngIf="step.condition?.if_false_child_steps" [steps]="step.condition!.if_false_child_steps!" (stepsChange)="onNestedStepsChange(step, 'if_false_child_steps', $event)" [initialized_workflow]="initialized_workflow"></app-visual-selector-tool>
-            <button *ngIf="step.condition?.if_false_child_steps" (click)="addNestedStep(step, 'if_false_child_steps', i)" class="btn btn-icon btn-add-nested" title="Add Nested Step">
-              <span class="material-icons">add</span>
-            </button>
+            <app-visual-selector-tool [isRoot]="false" *ngIf="step.condition?.if_false_child_steps" [steps]="step.condition!.if_false_child_steps!" (stepsChange)="onNestedStepsChange(step, 'if_false_child_steps', $event)" [initialized_workflow]="initialized_workflow"></app-visual-selector-tool>
           </div>
         </ng-container>
 
@@ -148,10 +146,12 @@
             <label class="form-label">
               <span class="material-icons">loop</span> Loop Type
             </label>
-            <select [(ngModel)]="step.loop!.loop_type" class="form-control" (ngModelChange)="updateLoopType(i, $event)">
-              <option value="fixed_iterations">Fixed Iterations</option>
-              <option value="until_condition">Until Condition</option>
-            </select>
+            <app-custom-select
+              [value]="step.loop!.loop_type"
+              [options]="[{ value: 'fixed_iterations', label: 'Fixed Iterations', icon: 'repeat' }, { value: 'until_condition', label: 'Until Condition', icon: 'rule' }]"
+              placeholder="Select Loop Type"
+              (valueChange)="updateLoopType(i, $event)">
+            </app-custom-select>
           </div>
 
           <div *ngIf="step.loop!.loop_type === 'fixed_iterations'" class="form-group">
@@ -165,19 +165,26 @@
             <label class="form-label">
               <span class="material-icons">rule</span> Stop Condition Type
             </label>
-            <select [(ngModel)]="step.loop!.condition_type" class="form-control">
-              <option value="element_found">Element Found</option>
-              <option value="element_not_found">Element Not Found</option>
-              <option value="element_attribute_equals">Element Attribute Equals</option>
-              <option value="element_attribute_not_equals">Element Attribute Not Equals</option>
-            </select>
+            <app-custom-select
+              [value]="step.loop!.condition_type"
+              [options]="[
+                { value: 'element_found', label: 'Element Found', icon: 'visibility' },
+                { value: 'element_not_found', label: 'Element Not Found', icon: 'visibility_off' },
+                { value: 'element_attribute_equals', label: 'Element Attribute Equals', icon: 'compare_arrows' },
+                { value: 'element_attribute_not_equals', label: 'Element Attribute Not Equals', icon: 'not_equal' }
+              ]"
+              placeholder="Select Condition Type"
+              (valueChange)="step.loop!.condition_type = $event; emitChanges()">
+            </app-custom-select>
           </div>
 
           <div *ngIf="step.loop!.loop_type === 'until_condition'" class="form-group">
             <label class="form-label">
               <span class="material-icons">find_in_page</span> Stop Condition Selector
             </label>
-            <app-autocomplete-selector [(selectedSelector)]="step.loop!.condition_element_selector!" [domElements]="domElements"></app-autocomplete-selector>
+            <select [(ngModel)]="step.loop!.condition_element_selector" class="form-control">
+              <option *ngFor="let element of domElements" [value]="element.id">{{ element.tag_name }} - {{ element.attributes | json }}</option>
+            </select>
           </div>
 
           <div *ngIf="step.loop!.loop_type === 'until_condition' && step.loop!.condition_type?.includes('attribute_')" class="form-group">
@@ -196,10 +203,7 @@
 
           <div class="nested-steps">
             <div class="nested-title"><span class="material-icons">list</span> Loop Steps</div>
-            <app-visual-selector-tool *ngIf="step.loop?.child_steps" [steps]="step.loop!.child_steps!" (stepsChange)="onNestedStepsChange(step, 'child_steps', $event)" [initialized_workflow]="initialized_workflow"></app-visual-selector-tool>
-            <button *ngIf="step.loop?.child_steps" (click)="addNestedStep(step, 'child_steps', i)" class="btn btn-icon btn-add-nested" title="Add Nested Step">
-              <span class="material-icons">add</span>
-            </button>
+            <app-visual-selector-tool [isRoot]="false" *ngIf="step.loop?.child_steps" [steps]="step.loop!.child_steps!" (stepsChange)="onNestedStepsChange(step, 'child_steps', $event)" [initialized_workflow]="initialized_workflow"></app-visual-selector-tool>
           </div>
         </ng-container>
       </div>
@@ -217,9 +221,9 @@
       </button>
     </div>
 
-    <button (click)="exportToJson()" class="fab btn-export" title="Export as JSON">
+    <button *ngIf="isRoot" (click)="exportToJson()" class="fab btn-export" title="Export as JSON">
       <span class="material-icons">file_download</span>
     </button>
   </div>
-  <button (click)="completeWorkflow()" class="btn btn-primary btn-block mt-4 text-white font-weight-bold py-2">Continue</button>
+  <button *ngIf="isRoot" (click)="completeWorkflow()" class="btn btn-primary btn-block mt-4 text-white font-weight-bold py-2">Continue</button>
 </div>

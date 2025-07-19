@@ -4,16 +4,16 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { DomElementsSelectorWsService } from '../../data-access/dom-elements-selector/real-time-dom-elemnts-selector.service';
 import { DomElement } from '../../models/dom-element.model';
-import { AutocompleteSelectorComponent } from '../autocomplete-selector/autocomplete-selector';
 import { HttpClientModule } from '@angular/common/http';
 import { FilterActionsPipe } from '../../pipes/filter-actions-pipe';
 import { Workflow } from '../../models/workflow.model';
 import { Step } from '../../models/step.model';
+import { CustomSelectComponent, SelectOption } from '../custom-select/custom-select';
 
 @Component({
   selector: 'app-visual-selector-tool',
   standalone: true,
-  imports: [CommonModule, FormsModule, AutocompleteSelectorComponent, HttpClientModule, FilterActionsPipe],
+  imports: [CommonModule, FormsModule, HttpClientModule, FilterActionsPipe, CustomSelectComponent],
   templateUrl: './visual-selector-tool.html',
   styleUrls: ['./visual-selector-tool.css']
 })
@@ -27,31 +27,50 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   @Output() stepsChange = new EventEmitter<Step[]>();
   @Output() workflow = new EventEmitter<Workflow>();
 
+  @Input() isRoot: boolean = true;
+
   domElements: DomElement[] = [];
   private wsSubscription!: Subscription;
 
   isExpanded: { [key: number]: boolean } = {};
 
-  ACTION_TYPE_CHOICES = [
-    { value: 'on_element', label: 'On Element' },
-    { value: 'on_page', label: 'On Page' },
+  ACTION_TYPE_CHOICES: SelectOption[] = [
+    { value: 'on_element', label: 'On Element', icon: 'touch_app' },
+    { value: 'on_page', label: 'On Page', icon: 'web' },
   ];
 
-  ACTION_NAME_CHOICES = [
-    { value: 'element_click', label: 'Element Click' },
-    { value: 'element_right_click', label: 'Element Right Click' },
-    { value: 'element_text', label: 'Element Text Extraction' },
-    { value: 'element_input', label: 'Element Input' },
-    { value: 'element_long_press', label: 'Element Long Press' },
-    { value: 'element_double_click', label: 'Element Double Click' },
-    { value: 'element_inner_html', label: 'Element Inner HTML' },
-    { value: 'element_get_attribute', label: 'Element Get Attribute' },
-    { value: 'page_scroll_up', label: 'Page Scroll Up' },
-    { value: 'page_scroll_down', label: 'Page Scroll Down' },
-    { value: 'page_refresh', label: 'Page Refresh' },
-    { value: 'page_navigate', label: 'Page Navigate' },
-    { value: 'page_go_back', label: 'Page Go Back' },
-    { value: 'page_go_forward', label: 'Page Go Forward' },
+  ACTION_NAME_CHOICES: SelectOption[] = [
+    { value: 'element_click', label: 'Element Click', icon: 'mouse' },
+    { value: 'element_right_click', label: 'Element Right Click', icon: 'mouse' },
+    { value: 'element_double_click', label: 'Element Double Click', icon: 'double_arrow' },
+    { value: 'element_hover', label: 'Element Hover', icon: 'pan_tool' },
+    { value: 'element_input_text', label: 'Element Input Text', icon: 'edit' },
+    { value: 'element_clear_input', label: 'Element Clear Input', icon: 'clear' },
+    { value: 'scroll_to_element', label: 'Scroll to Element', icon: 'vertical_align_center' },
+    { value: 'element_text', label: 'Element Text Extraction', icon: 'text_fields' },
+    { value: 'element_input', label: 'Element Input', icon: 'input' },
+    { value: 'element_long_press', label: 'Element Long Press', icon: 'touch_app' },
+    { value: 'element_inner_html', label: 'Element Inner HTML', icon: 'code' },
+    { value: 'element_get_attribute', label: 'Element Get Attribute', icon: 'description' },
+    { value: 'page_scroll_up', label: 'Page Scroll Up', icon: 'arrow_upward' },
+    { value: 'page_scroll_down', label: 'Page Scroll Down', icon: 'arrow_downward' },
+    { value: 'page_refresh', label: 'Page Refresh', icon: 'refresh' },
+    { value: 'page_navigate', label: 'Page Navigate', icon: 'open_in_new' },
+    { value: 'page_go_back', label: 'Page Go Back', icon: 'arrow_back' },
+    { value: 'page_go_forward', label: 'Page Go Forward', icon: 'arrow_forward' },
+  ];
+
+  CONDITION_TYPE_CHOICES: SelectOption[] = [
+    { value: 'element_found', label: 'Element Found', icon: 'visibility' },
+    { value: 'element_not_found', label: 'Element Not Found', icon: 'visibility_off' },
+    { value: 'element_attribute_equals', label: 'Element Attribute Equals', icon: 'compare_arrows' },
+    { value: 'element_attribute_not_equals', label: 'Element Attribute Not Equals', icon: 'not_equal' },
+    { value: 'element_visible', label: 'Element Visible', icon: 'eye' },
+    { value: 'element_text_equals', label: 'Element Text Equals', icon: 'format_textdirection_l_to_r' },
+    { value: 'element_text_contains', label: 'Element Text Contains', icon: 'search' },
+    { value: 'element_attribute_contains', label: 'Element Attribute Contains', icon: 'filter_list' },
+    { value: 'page_url_contains', label: 'Page URL Contains', icon: 'link' },
+    { value: 'page_title_contains', label: 'Page Title Contains', icon: 'title' },
   ];
 
   constructor(private wsService: DomElementsSelectorWsService) {}
@@ -201,7 +220,6 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       parentStep.loop.child_steps!.push(newNestedStep);
     }
 
-    // Optionally add to the flat steps array if needed for rendering
     this.steps.splice(parentIndex + 1, 0, newNestedStep);
     this.isExpanded[this.steps.length - 1] = true;
     this.emitChanges();
@@ -257,7 +275,7 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     this.emitChanges();
   }
 
-  updateActionType(index: number, actionType: 'on_page' | 'on_element') {
+  updateActionType(index: number, actionType: string) {
     const step = this.steps[index];
     if (step.step_type !== 'action' || !step.action) return;
     step.action.action_type = actionType;
@@ -293,9 +311,13 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       step.action.attribute = step.action.attribute || '';
       delete step.action.url;
       delete step.action.value;
-    } else if (actionName === 'element_input') {
+    } else if (actionName === 'element_input_text' || actionName === 'element_input') {
       step.action.value = step.action.value || '';
       delete step.action.attribute;
+      delete step.action.url;
+    } else if (actionName === 'element_clear_input' || actionName === 'element_hover') {
+      delete step.action.attribute;
+      delete step.action.value;
       delete step.action.url;
     } else {
       delete step.action.url;
@@ -357,16 +379,15 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting JSON:', error);
-      alert('Failed to export JSON. Check console for details. (Likely a circular reference)');
+      alert('Failed to export JSON. Check console for details.');
     }
   }
 
-  private emitChanges() {
+  emitChanges() {
     this.stepsChange.emit([...this.steps]);
   }
 
   private reorderSteps() {
-    // Reorder all steps based on their order and nested structure
     this.steps.sort((a, b) => a.order - b.order);
     let currentOrder = 1;
     this.steps.forEach(step => {

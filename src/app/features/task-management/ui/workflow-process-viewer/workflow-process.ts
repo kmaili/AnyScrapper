@@ -5,6 +5,7 @@ import { Condition } from '../../../task-creation/models/condition.model';
 import { Loop } from '../../../task-creation/models/loop.model';
 import { Action } from '../../../task-creation/models/action.model';
 import { ActivatedRoute } from '@angular/router';
+import { RealTimeWorkflowExecutionService } from '../../../task-creation/data-access/workflow/real-time-workflow-execution.service';
 
 @Component({
   selector: 'app-workflow-process-viewer',
@@ -21,9 +22,11 @@ export class WorkflowProcessComponent implements OnInit{
   expandedSteps = new Set<any>();
 
   ngOnInit(): void {
-    if (!this.isRoot) {
-      return;
-    }
+    
+    this.steps.forEach(step => {
+      this.expandedSteps.add(step)
+    })
+    
   }
   
 
@@ -40,7 +43,7 @@ export class WorkflowProcessComponent implements OnInit{
   }
 
   getStatusClass(step: any): string {
-    const status = this.stepStatuses[step.id] || 'not-executed';
+    const status = step.status || 'not-executed';
     return `status-${status}`;
   }
 

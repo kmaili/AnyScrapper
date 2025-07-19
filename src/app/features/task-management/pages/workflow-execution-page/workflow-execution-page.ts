@@ -4,7 +4,8 @@ import { WorkflowService } from '../../../task-creation/data-access/workflow/wor
 import { Workflow } from '../../../task-creation/models/workflow.model';
 import { WorkflowProcessComponent } from '../../ui/workflow-process-viewer/workflow-process';
 import { DatePipe } from '@angular/common';
-
+import { RealTimeWorkflowExecutionService } from '../../../task-creation/data-access/workflow/real-time-workflow-execution.service';
+import { updateStepStatus } from '../../../task-creation/utils/workflow.utils';
 @Component({
   selector: 'app-workflow-execution-page',
   imports: [WorkflowProcessComponent, DatePipe],
@@ -14,7 +15,7 @@ import { DatePipe } from '@angular/common';
 export class WorkflowExecutionPage implements OnInit {
   workflow!: Workflow;
 
-  constructor(private router: ActivatedRoute, private workflowService: WorkflowService, private changeDetectorRef: ChangeDetectorRef) {}
+  constructor(private router: ActivatedRoute, private workflowService: WorkflowService, private changeDetectorRef: ChangeDetectorRef, private workflowExecutionService: RealTimeWorkflowExecutionService) {}
 
 
   ngOnInit(): void {
@@ -27,12 +28,31 @@ export class WorkflowExecutionPage implements OnInit {
       next: (workflow) => {
         this.workflow = workflow;
         this.changeDetectorRef.detectChanges();
+        this.startFetchingWorkflowExecution();
         console.log('Workflow fetched:', this.workflow);
       },
       error: (error) => {
         console.error('Error fetching workflow:', error);
       }
     });
+  }
+  startFetchingWorkflowExecution() {
+    this.workflowExecutionService.setupWebSocket('ws://localhost:8000/ws/workflow_execution/', this.workflow.id!);
+    this.workflowExecutionService.workflowExecution$.subscribe({
+      next: (workflowExecution) => {
+        console.log('Workflow execution updated:', workflowExecution);
+        if (!workflowExecution) {
+          return;
+        }
+        workflowExecution.steps_status.forEach((step_status: any) => {
+          updateStepStatus(this.workflow, step_status);
+        })
+        this.changeDetectorRef.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error fetching workflow execution:', error);
+      }
+    })
   }
 
 }

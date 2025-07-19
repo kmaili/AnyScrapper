@@ -1,4 +1,6 @@
 export interface Action {
+  hover_duration?: number;
+  key_code?: string;
   step?: number; // FK back to Step.id
   action_type: string;
   action_name: string;

@@ -10,6 +10,7 @@ export interface Step {
   workflow: number;
   parent_loop?: number | null;  // FK to Loop id, nullable
   order: number;
+  status? : 'finished' | 'failed' | 'not-executed' | 'executing';
 
   // Detailed step data depending on type
   action?: Action;
