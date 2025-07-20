@@ -1,4 +1,4 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { DomElement } from '../../models/dom-element.model';
@@ -11,16 +11,14 @@ export class DomElementsSelectorWsService {
   private domElementsSubject = new BehaviorSubject<DomElement[]>([]);
   domElements$: Observable<DomElement[]> = this.domElementsSubject.asObservable();
 
-  constructor(private ngZone: NgZone, private http: HttpClient) {}
+  constructor(private http: HttpClient) {}
 
   connect(url: string, apiUrl: string = 'http://localhost:8000/api/dom-elements/') {
     // Fetch initial DOM elements from HTTP API
     this.http.get<DomElement[]>(apiUrl).subscribe({
       next: (response) => {
-        this.ngZone.run(() => {
-          this.domElementsSubject.next(response || []);
-          console.log('Initial DOM elements fetched from API', response);
-        });
+        this.domElementsSubject.next(response || []);
+        console.log('Initial DOM elements fetched from API', response);
       },
       error: (error) => {
         console.error('Failed to fetch initial DOM elements', error);
@@ -43,8 +41,7 @@ export class DomElementsSelectorWsService {
 
     this.socket.onmessage = (event) => {
       // Run inside Angular zone to update bindings
-      this.ngZone.run(() => {
-        try {
+      try {
           const data = JSON.parse(event.data);
           if (data.elements) {
             this.domElementsSubject.next(data.elements);
@@ -52,7 +49,6 @@ export class DomElementsSelectorWsService {
         } catch (err) {
           console.error('WebSocket message parse error', err);
         }
-      });
     };
 
     this.socket.onclose = () => {

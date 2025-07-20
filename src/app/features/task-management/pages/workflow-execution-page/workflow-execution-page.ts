@@ -3,19 +3,21 @@ import { ActivatedRoute } from '@angular/router';
 import { WorkflowService } from '../../../task-creation/data-access/workflow/workflow.service';
 import { Workflow } from '../../../task-creation/models/workflow.model';
 import { WorkflowProcessComponent } from '../../ui/workflow-process-viewer/workflow-process';
-import { DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { RealTimeWorkflowExecutionService } from '../../../task-creation/data-access/workflow/real-time-workflow-execution.service';
 import { updateStepStatus } from '../../../task-creation/utils/workflow.utils';
+import { NgxJsonViewerModule } from 'ngx-json-viewer';
+import { MessageService } from 'primeng/api';
 @Component({
   selector: 'app-workflow-execution-page',
-  imports: [WorkflowProcessComponent, DatePipe],
+  imports: [CommonModule ,WorkflowProcessComponent, DatePipe, NgxJsonViewerModule],
   templateUrl: './workflow-execution-page.html',
   styleUrl: './workflow-execution-page.css'
 })
 export class WorkflowExecutionPage implements OnInit {
   workflow!: Workflow;
 
-  constructor(private router: ActivatedRoute, private workflowService: WorkflowService, private changeDetectorRef: ChangeDetectorRef, private workflowExecutionService: RealTimeWorkflowExecutionService) {}
+  constructor(private router: ActivatedRoute, private workflowService: WorkflowService, private changeDetectorRef: ChangeDetectorRef, private workflowExecutionService: RealTimeWorkflowExecutionService, private messageService: MessageService) {}
 
 
   ngOnInit(): void {
@@ -53,6 +55,32 @@ export class WorkflowExecutionPage implements OnInit {
         console.error('Error fetching workflow execution:', error);
       }
     })
+  }
+  exportToJson() {
+    try {
+      const jsonString = JSON.stringify(this.workflow.results!, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workflow-results.json';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting JSON:', error);
+      alert('Failed to export JSON. Check console for details.');
+    }
+  }
+  restartWorkflow() {
+    this.workflowService.execute_workflow(this.workflow).subscribe({
+      next: () => {
+        this.workflow.status = 'in_progress';
+        this.messageService.add({ severity: 'success', summary: 'Workflow Executed', detail: `Workflow "${this.workflow.name}" has been executed successfully.` });
+      },
+      error: (error) => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: `Error executing workflow: ${error}` });
+      }
+    });
   }
 
 }

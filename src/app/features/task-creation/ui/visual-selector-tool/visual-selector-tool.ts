@@ -475,4 +475,16 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   private getAllActionChoices(): SelectOption[] {
     return this.ALL_ACTION_CHOICES;
   }
+
+  requiresSelector(actionName: string): boolean {
+    const selectorRequiredActions = [
+      'element_click', 'element_right_click', 'element_double_click', 'element_hover',
+      'element_input_text', 'element_clear_input', 'element_long_press', 'scroll_to_element',
+      'element_text', 'element_get_inner_html', 'element_get_attribute_value',
+      'element_check_attribute_value_equals', 'element_check_attribute_value_not_equals',
+      'element_check_attribute_exists', 'element_check_attribute_value_contains',
+      'element_check_attribute_value_starts_with', 'element_check_attribute_value_ends_with'
+    ];
+    return selectorRequiredActions.includes(actionName);
+  }
 }

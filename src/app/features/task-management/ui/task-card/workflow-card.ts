@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Workflow } from '../../../task-creation/models/workflow.model';
 import { WorkflowService } from '../../../task-creation/data-access/workflow/workflow.service';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-workflow-card',
@@ -16,12 +17,14 @@ export class WorkflowCardComponent {
 
   @Output() workflowDeleted = new EventEmitter<Workflow>();
 
-  constructor(private workflowService: WorkflowService, private router: Router) {}
+  constructor(private workflowService: WorkflowService, private router: Router, private messageService: MessageService) {}
 
   executeWorkflow(){
     this.workflowService.execute_workflow(this.workflow).subscribe({
-      next: (response) => {
-        console.log('Workflow executed successfully:', response);
+      next: (_) => {
+        this.workflow.status = 'in_progress';
+        this.messageService.add({ severity: 'success', summary: 'Workflow Executed', detail: `Workflow "${this.workflow.name}" has been executed successfully.` });
+        this.openWorkflowProgress();
       },
       error: (error) => {
         console.error('Error executing workflow:', error);
@@ -40,7 +43,7 @@ export class WorkflowCardComponent {
       }
     });
   }
-  editWorkflow() {
+  openWorkflowProgress() {
     console.log('Editing workflow:', this.workflow);
     this.router.navigate(['/workflow', this.workflow.id]);
   }

@@ -14,9 +14,17 @@
                     <i class="pi pi-play-circle"></i>
                     Start
                 </button>
-                <button class="button small primary" (click)="editWorkflow()">
-                    <i class="pi pi-pen-to-square"></i>
-                    Edit
+                <button class="button small primary" (click)="openWorkflowProgress()">
+                    <div class="d-flex align-items-center gap-1" *ngIf="workflow.status === 'in_progress' else done">
+                        <span class="material-icons">trending_up</span>
+                        Progress
+                    </div>
+                    <ng-template #done>
+                        <div class="d-flex align-items-center gap-1">
+                            <span class="material-icons">done</span>
+                            Results
+                        </div>
+                    </ng-template>
                 </button>
                 <button class="button small danger" (click)="deleteWorkflow()">
                     <i class="pi pi-trash"></i>

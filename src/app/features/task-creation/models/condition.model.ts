@@ -5,7 +5,7 @@ export interface Condition {
   condition_type: string;
   selector: number;  // DomElement ID
   attribute?: string | null;
-  value?: string | null;
+  expected_value?: string | null;
 
   if_true_child_steps?: Step[] | null;
   if_false_child_steps?: Step[] | null;

@@ -1,8 +1,22 @@
 <div class="workflow-header">
   <div class="workflow-info">
-    <h2 class="workflow-name">{{ workflow.name || 'Untitled Workflow' }}</h2>
+    <h3 class="workflow-name">{{ workflow.name || 'Untitled Workflow' }}</h3>
     <p class="workflow-date">Created on: {{ workflow.created_at | date:'mediumDate' }}</p>
   </div>
 </div>
 
 <app-workflow-process-viewer [steps]="workflow.steps"></app-workflow-process-viewer>
+<div class="workflow-results" *ngIf="workflow.status === 'completed' && workflow.results">
+  <h3>Workflow Results</h3>
+  <ngx-json-viewer [json]="workflow.results"></ngx-json-viewer>
+    <div class="d-flex gap-2">
+      <button class="export-data-btn" (click)="exportToJson()">
+        <span class="material-icons">file_download</span>
+        Export Data
+      </button>
+        <button class="restart-workflow-btn" (click)="restartWorkflow()">
+        <span class="material-icons">refresh</span>
+        Restart Workflow
+      </button>
+    </div>
+</div>

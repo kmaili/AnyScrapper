@@ -77,14 +77,8 @@
             </app-custom-select>
           </div>
 
-          <div *ngIf="step.action!.action_type === 'interaction' && step.action!.action_name === 'page_navigate'" class="form-group">
-            <label class="form-label">
-              <span class="material-icons">link</span> URL
-            </label>
-            <input [(ngModel)]="step.action!.url" class="form-control" placeholder="https://example.com">
-          </div>
-
-          <div *ngIf="step.action!.action_type === 'data_collection'" class="form-group">
+          <!-- Selector for all actions requiring a DOM element -->
+          <div *ngIf="requiresSelector(step.action!.action_name)" class="form-group">
             <label class="form-label">
               <span class="material-icons">find_in_page</span> Selector
             </label>
@@ -93,6 +87,15 @@
             </select>
           </div>
 
+          <!-- URL for page_navigate -->
+          <div *ngIf="step.action!.action_type === 'interaction' && step.action!.action_name === 'page_navigate'" class="form-group">
+            <label class="form-label">
+              <span class="material-icons">link</span> URL
+            </label>
+            <input [(ngModel)]="step.action!.url" class="form-control" placeholder="https://example.com">
+          </div>
+
+          <!-- Attribute Name for relevant data collection actions -->
           <div *ngIf="step.action!.action_type === 'data_collection' && (step.action!.action_name === 'element_get_attribute_value' || step.action!.action_name.includes('element_check_attribute'))" class="form-group">
             <label class="form-label">
               <span class="material-icons">description</span> Attribute Name
@@ -100,13 +103,15 @@
             <input [(ngModel)]="step.action!.attribute" class="form-control" placeholder="e.g., href, src, class, id">
           </div>
 
-          <div *ngIf="step.action!.action_type === 'data_collection' && (step.action!.action_name === 'element_input_text')" class="form-group">
+          <!-- Input Value for element_input_text -->
+          <div *ngIf="step.action!.action_type === 'interaction' && step.action!.action_name === 'element_input_text'" class="form-group">
             <label class="form-label">
               <span class="material-icons">input</span> Input Value
             </label>
             <input [(ngModel)]="step.action!.expected_value" class="form-control" placeholder="Text to input">
           </div>
 
+          <!-- Expected Value for data collection checks -->
           <div *ngIf="step.action!.action_type === 'data_collection' && step.action!.action_name.includes('element_check_attribute_value_')" class="form-group">
             <label class="form-label">
               <span class="material-icons">compare_arrows</span> Expected Value
@@ -148,7 +153,7 @@
             <label class="form-label">
               <span class="material-icons">compare_arrows</span> Expected Value
             </label>
-            <input [(ngModel)]="step.condition!.value" class="form-control" placeholder="Expected value">
+            <input [(ngModel)]="step.condition!.expected_value" class="form-control" placeholder="Expected value">
           </div>
 
           <div class="nested-steps">
