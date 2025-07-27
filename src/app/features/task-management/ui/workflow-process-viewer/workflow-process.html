@@ -1,23 +1,23 @@
 <div class="workflow-tree">
   <ng-container *ngFor="let step of steps">
     <div class="step-node">
-
       <!-- Action Node -->
       <div *ngIf="isAction(step)" class="step-header action-step">
         <span class="step-status" [ngClass]="getStatusClass(step)">
           <span class="status-icon"></span>
         </span>
         <i class="pi pi-bolt step-icon text-primary"></i>
-        <span class="step-tag">{{ step.tag || 'Unnamed Action' }}</span>
+        <span class="step-tag" *ngIf="step.tag">{{ step.tag }}</span>
+        <span class="step-tag" *ngIf="!step.tag">Unnamed Action</span>
+        <span class="step-description">{{ getStepName(step) }}</span>
       </div>
 
       <!-- Loop / Condition Nodes -->
       <div *ngIf="!isAction(step)" class="step-header" (click)="toggleStep(step)">
-        <span class="chevron" [class.open]="isExpanded(step)">&#8250;</span>
+        <span class="chevron" [class.open]="isExpanded(step)">›</span>
         <span class="step-status" [ngClass]="getStatusClass(step)">
           <span class="status-icon"></span>
         </span>
-
         <i
           [ngClass]="[
             'step-icon',
@@ -26,9 +26,9 @@
             'pi pi-question-circle'
           ]"
         ></i>
-
-
-        <span class="step-tag">{{ step.tag || 'Unnamed Step' }}</span>
+        <span class="step-tag" *ngIf="step.tag">{{ step.tag }}</span>
+        <span class="step-tag" *ngIf="!step.tag">Unnamed Step</span>
+        <span class="step-description">{{ getStepName(step) }}</span>
       </div>
 
       <div class="children" *ngIf="isExpanded(step) && !isAction(step)">
@@ -49,7 +49,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </ng-container>
 </div>

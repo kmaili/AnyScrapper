@@ -1,22 +1,36 @@
-<div class="workflow-header">
-  <div class="workflow-info">
-    <h3 class="workflow-name">{{ workflow.name || 'Untitled Workflow' }}</h3>
-    <p class="workflow-date">Created on: {{ workflow.created_at | date:'mediumDate' }}</p>
+<div *ngIf="workflow" class="container">
+  <div class="workflow-header">
+    <div class="workflow-info">
+      <h3 class="workflow-name">{{ workflow.name || 'Untitled Workflow' }}</h3>
+      <p class="workflow-date">Created on: {{ workflow.created_at | date:'mediumDate' }}</p>
+    </div>
   </div>
-</div>
 
-<app-workflow-process-viewer [steps]="workflow.steps"></app-workflow-process-viewer>
-<div class="workflow-results" *ngIf="workflow.status === 'completed' && workflow.results">
-  <h3>Workflow Results</h3>
-  <ngx-json-viewer [json]="workflow.results"></ngx-json-viewer>
-    <div class="d-flex gap-2">
-      <button class="export-data-btn" (click)="exportToJson()">
+  <div class="content">
+    <app-workflow-process-viewer [steps]="workflow.steps" class="process-viewer"></app-workflow-process-viewer>
+    
+    <div class="workflow-results" *ngIf="workflow.status === 'completed'" #workflowResults>
+      <h3>Workflow Results</h3>
+      <div class="results-container">
+        <ngx-json-viewer [json]="workflow.results"></ngx-json-viewer>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button 
+        *ngIf="workflow.status === 'completed'" 
+        class="export-data-btn" 
+        (click)="exportToJson()">
         <span class="material-icons">file_download</span>
         Export Data
       </button>
-        <button class="restart-workflow-btn" (click)="restartWorkflow()">
+      <button 
+        *ngIf="workflow.status === 'completed' || workflow.status === 'failed'" 
+        class="restart-workflow-btn" 
+        (click)="restartWorkflow()">
         <span class="material-icons">refresh</span>
         Restart Workflow
       </button>
     </div>
+  </div>
 </div>

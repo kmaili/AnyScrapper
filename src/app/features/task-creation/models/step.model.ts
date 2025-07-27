@@ -5,10 +5,10 @@ import { Loop } from './loop.model';
 
 export interface Step {
   id: number;
-  tag?: string | null;
+  tag?: string;
   step_type: 'action' | 'condition' | 'loop';
   workflow: number;
-  parent_loop?: number | null;  // FK to Loop id, nullable
+  parent_loop?: number;  // FK to Loop id, nullable
   order: number;
   status? : 'finished' | 'failed' | 'not-executed' | 'executing';
 

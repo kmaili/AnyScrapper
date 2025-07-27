@@ -81,6 +81,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   ];
   ALL_ACTION_CHOICES: SelectOption[] = [...this.INTERACTION_ACTION_CHOICES, ...this.DATA_COLLECTION_ACTION_CHOICES];
 
+  actionTypeChanged = new EventEmitter<{ stepId: number; newType: string }>();
+
   constructor(private wsService: DomElementsSelectorWsService) {}
 
   ngOnInit() {
@@ -93,8 +95,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
           workflow: 1,
           action: {
             step: 1,
-            action_type: 'interaction',
-            action_name: 'page_scroll_down',
+            action_type: 'data_collection',
+            action_name: 'element_text',
           }
         }
       ];
@@ -133,8 +135,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
         workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
         action: {
           step: newId,
-          action_type: 'interaction',
-          action_name: 'page_scroll_down',
+          action_type: 'data_collection',
+          action_name: 'element_text',
         }
       };
     } else if (type === 'condition') {
@@ -211,8 +213,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       parent_loop: parentStep.step_type === 'loop' ? parentStep.id : parentStep.parent_loop,
       action: {
         step: newId,
-        action_type: 'interaction',
-        action_name: 'page_scroll_down',
+        action_type: 'data_collection',
+        action_name: 'element_text',
       }
     };
 
@@ -247,8 +249,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
         workflow: originalStep.workflow,
         action: {
           step: newId,
-          action_type: 'interaction',
-          action_name: 'page_scroll_down',
+          action_type: 'data_collection',
+          action_name: 'element_text',
         }
       };
     } else if (stepType === 'condition') {
@@ -286,13 +288,14 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   updateActionType(index: number, actionType: string) {
     const step = this.steps[index];
     if (step.step_type !== 'action' || !step.action) return;
+    const oldType = step.action.action_type;
     step.action.action_type = actionType as 'interaction' | 'data_collection';
 
     const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
 
     if (actionType === 'interaction') {
       step.action.action_name = 'page_scroll_down';
-      step.action.selector = null;
+      step.action.selector = undefined;
       delete step.action.attribute;
       delete step.action.expected_value;
       delete step.action.url;
@@ -303,12 +306,16 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       delete step.action.expected_value;
       delete step.action.url;
     }
+    if (oldType !== actionType) {
+      this.actionTypeChanged.emit({ stepId: step.id, newType: actionType });
+    }
     this.emitChanges();
   }
 
   updateActionName(index: number, actionName: string) {
     const step = this.steps[index];
     if (step.step_type !== 'action' || !step.action) return;
+    const oldType = step.action.action_type;
     step.action.action_name = actionName;
 
     const action_type = this.getActionType(actionName);
@@ -338,6 +345,9 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       delete step.action.url;
       delete step.action.attribute;
       delete step.action.expected_value;
+    }
+    if (this.getActionType(actionName) !== oldType) {
+      this.actionTypeChanged.emit({ stepId: step.id, newType: action_type });
     }
     this.emitChanges();
   }
@@ -403,6 +413,7 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       alert('Failed to export JSON. Check console for details.');
     }
   }
+
 
   emitChanges() {
     this.stepsChange.emit([...this.steps]);

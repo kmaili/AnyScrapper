@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { WorkflowService } from '../../../task-creation/data-access/workflow/workflow.service';
 import { Workflow } from '../../../task-creation/models/workflow.model';
@@ -8,6 +8,7 @@ import { RealTimeWorkflowExecutionService } from '../../../task-creation/data-ac
 import { updateStepStatus } from '../../../task-creation/utils/workflow.utils';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { MessageService } from 'primeng/api';
+import { Step } from '../../../task-creation/models/step.model';
 @Component({
   selector: 'app-workflow-execution-page',
   imports: [CommonModule ,WorkflowProcessComponent, DatePipe, NgxJsonViewerModule],
@@ -17,6 +18,7 @@ import { MessageService } from 'primeng/api';
 export class WorkflowExecutionPage implements OnInit {
   workflow!: Workflow;
 
+  @ViewChild('workflowResults') workflowResults!: ElementRef;
   constructor(private router: ActivatedRoute, private workflowService: WorkflowService, private changeDetectorRef: ChangeDetectorRef, private workflowExecutionService: RealTimeWorkflowExecutionService, private messageService: MessageService) {}
 
 
@@ -29,14 +31,21 @@ export class WorkflowExecutionPage implements OnInit {
     this.workflowService.get_workflow_by_id(Number(workflowId)).subscribe({
       next: (workflow) => {
         this.workflow = workflow;
-        this.changeDetectorRef.detectChanges();
-        this.startFetchingWorkflowExecution();
         console.log('Workflow fetched:', this.workflow);
+        this.changeDetectorRef.detectChanges();
+        this.scrollToWorkflowResults();
+        this.startFetchingWorkflowExecution();
       },
       error: (error) => {
         console.error('Error fetching workflow:', error);
       }
     });
+  }
+  scrollToWorkflowResults() {
+    if (this.workflowResults) {
+      this.workflowResults.nativeElement.scrollIntoView({ behavior: 'smooth' });
+      console.log('Scrolling to workflow results');
+    }
   }
   startFetchingWorkflowExecution() {
     this.workflowExecutionService.setupWebSocket('ws://localhost:8000/ws/workflow_execution/', this.workflow.id!);
@@ -50,12 +59,14 @@ export class WorkflowExecutionPage implements OnInit {
           updateStepStatus(this.workflow, step_status);
         })
         this.changeDetectorRef.detectChanges();
+        this.refreshIfFinished();
       },
       error: (error) => {
         console.error('Error fetching workflow execution:', error);
       }
     })
   }
+  
   exportToJson() {
     try {
       const jsonString = JSON.stringify(this.workflow.results!, null, 2);
@@ -72,6 +83,7 @@ export class WorkflowExecutionPage implements OnInit {
     }
   }
   restartWorkflow() {
+    this.workflow.results = [];
     this.workflowService.execute_workflow(this.workflow).subscribe({
       next: () => {
         this.workflow.status = 'in_progress';
@@ -83,4 +95,13 @@ export class WorkflowExecutionPage implements OnInit {
     });
   }
 
+  refreshIfFinished() {
+    this.workflow.steps.forEach((step: Step) => {
+      if (step.status === 'finished' || step.status === 'failed') {
+       window.location.reload();
+      }
+    })
+  }
+
 }
+

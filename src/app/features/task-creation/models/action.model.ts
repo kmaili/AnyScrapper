@@ -4,9 +4,9 @@ export interface Action {
   step?: number; // FK back to Step.id
   action_type: 'interaction' | 'data_collection';
   action_name: string;
-  selector?: number | null;
-  attribute?: string | null;
-  expected_value?: string | null;
-  url?: string | null;
+  selector?: number;
+  attribute?: string;
+  expected_value?: string;
+  url?: string;
   result?: any;
 }

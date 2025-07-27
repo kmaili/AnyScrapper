@@ -1,12 +1,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Step } from '../../models/step.model';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
-import { WorkflowService } from '../../data-access/workflow/workflow.service';
 import { Workflow } from '../../models/workflow.model';
-import { MessageService } from 'primeng/api';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-task-config-form',

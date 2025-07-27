@@ -8,3 +8,5 @@ body {
     font-weight: 400;
     letter-spacing: -0.022em;
 }
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

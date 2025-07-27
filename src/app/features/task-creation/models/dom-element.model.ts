@@ -1,6 +1,6 @@
 export interface DomElement {
   id: number;
   tag_name: string;
-  x_path: string;
+  finger_print: string;
   attributes: { name: string , value: string}[];
 }
