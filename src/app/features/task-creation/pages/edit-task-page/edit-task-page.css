@@ -1,0 +1,57 @@
+.workflow-editor {
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 2rem 3rem;
+  background: #fefefe;
+  border-radius: 20px;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  color: #1d1d1f;
+}
+
+.section-title {
+  font-weight: 700;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  letter-spacing: 0.02em;
+}
+
+.form-group {
+  margin-bottom: 1.75rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #6e6e73;
+  letter-spacing: 0.015em;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.65rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 14px;
+  border: 1.8px solid #d2d2d7;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  outline-offset: 3px;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  font-weight: 500;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.05);
+}
+
+.form-control::placeholder {
+  color: #aeaeb2;
+  font-weight: 400;
+}
+
+.form-control:focus {
+  border-color: #0071e3;
+  box-shadow: 0 0 10px #0071e3aa;
+  background: #fff;
+  outline: none;
+}

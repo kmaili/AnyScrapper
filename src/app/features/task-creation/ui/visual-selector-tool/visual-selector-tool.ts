@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
@@ -8,6 +8,9 @@ import { HttpClientModule } from '@angular/common/http';
 import { Workflow } from '../../models/workflow.model';
 import { Step } from '../../models/step.model';
 import { SelectOption, CustomSelectComponent } from '../custom-select/custom-select';
+import { ActivatedRoute, Router } from '@angular/router';
+import { WorkflowService } from '../../data-access/workflow/workflow.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-visual-selector-tool',
@@ -27,6 +30,7 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   @Output() workflow = new EventEmitter<Workflow>();
 
   @Input() isRoot: boolean = true;
+  @Input() isEditing: boolean = false;
 
   domElements: DomElement[] = [];
   private wsSubscription!: Subscription;
@@ -83,7 +87,9 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
 
   actionTypeChanged = new EventEmitter<{ stepId: number; newType: string }>();
 
-  constructor(private wsService: DomElementsSelectorWsService) {}
+  constructor(private wsService: DomElementsSelectorWsService, private route: ActivatedRoute,
+    private workflowService: WorkflowService, private changeDetectorRef: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     if (!this.steps || this.steps.length === 0) {
@@ -471,12 +477,13 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   }
 
   completeWorkflow() {
-    this.workflow.emit({
-      name: this.initialized_workflow.name,
-      startUrl: this.initialized_workflow.startUrl,
-      steps: this.steps
-    });
+      this.workflow.emit({
+        name: this.initialized_workflow.name,
+        startUrl: this.initialized_workflow.startUrl,
+        steps: this.steps
+      });
   }
+  
 
   private getActionType(actionName: string): 'interaction' | 'data_collection' {
     const choice = this.getAllActionChoices().find(c => c.value === actionName);

@@ -47,4 +47,8 @@ export class WorkflowCardComponent {
     console.log('Editing workflow:', this.workflow);
     this.router.navigate(['/workflow', this.workflow.id]);
   }
+  editWorkflow() {
+    console.log('Editing workflow:', this.workflow);
+    this.router.navigate(['/task-creation/edit', this.workflow.id]);
+  }
 }

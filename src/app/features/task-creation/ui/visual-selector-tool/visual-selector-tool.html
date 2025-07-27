@@ -1,6 +1,6 @@
 <div class="visual-selector-wrapper">
   <div class="main-content">
-    <div class="header" *ngIf="isRoot">
+    <div class="header" *ngIf="isRoot && ! isEditing">
       {{ initialized_workflow.startUrl }}
     </div>
     <div class="visual-selector-container">
@@ -264,6 +264,11 @@
         </button>
       </div>
     </div>
-    <button *ngIf="isRoot" (click)="completeWorkflow()" class="btn btn-primary btn-block mt-4 text-white font-weight-bold py-2">Continue</button>
+    <button *ngIf="isRoot" (click)="completeWorkflow()" class="btn btn-primary btn-block mt-4 text-white font-weight-bold py-2">
+      <!--new or update-->
+      <span *ngIf="!isEditing; else update">Create Workflow</span>
+      <ng-template #update>Update Workflow</ng-template>
+
+    </button>
   </div>
 </div>

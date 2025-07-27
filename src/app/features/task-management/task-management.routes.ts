@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { TaskListPageComponent } from './pages/task-list-page/task-list-page';
 import { authGuard } from '../../core/auth/auth-guard';
 import { WorkflowExecutionPage } from './pages/workflow-execution-page/workflow-execution-page';
+import { VisualSelectorToolComponent } from '../task-creation/ui/visual-selector-tool/visual-selector-tool';
 
 export const TASK_MANAGEMENT_ROUTES: Routes = [
   {

@@ -1,1 +1,36 @@
-<p>edit-task-page works!</p>
+<div *ngIf="workflow as wf" class="workflow-editor">
+  <h2 class="section-title">Edit Workflow</h2>
+
+  <div class="form-group">
+    <label for="workflow-name" class="form-label">Workflow Name</label>
+    <input
+      id="workflow-name"
+      type="text"
+      class="form-control"
+      [(ngModel)]="wf.name"
+      placeholder="Enter workflow name"
+      autocomplete="off"
+      spellcheck="false"
+    />
+  </div>
+
+  <div class="form-group">
+    <label for="workflow-start-url" class="form-label">Workflow Start URL</label>
+    <input
+      id="workflow-start-url"
+      type="text"
+      class="form-control"
+      [(ngModel)]="wf.startUrl"
+      placeholder="Enter workflow start URL"
+      autocomplete="off"
+      spellcheck="false"
+    />
+  </div>
+
+  <app-visual-selector-tool
+    [steps]="wf.steps"
+    [initialized_workflow]="wf"
+    (workflow)="updateWorkflow($event)"
+    [isEditing]="true">
+  </app-visual-selector-tool>
+</div>

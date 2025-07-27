@@ -10,6 +10,15 @@ import { Workflow } from '../../models/workflow.model';
 export class WorkflowService {
 
   constructor(private http:HttpClient) { }
+  
+  update_workflow(workflow: Workflow) {
+    return this.http.put(`http://localhost:8000/api/workflows/${workflow.id}/`, { 
+      'workflow_name': workflow.name,
+      'start_url': workflow.startUrl,
+      'steps': workflow.steps
+    })
+  }
+
 
   create_workflow(workflow: Workflow) {
     return this.http.post('http://localhost:8000/api/workflows/new/', { 
