@@ -4,11 +4,15 @@ import { Workflow } from '../../../task-creation/models/workflow.model';
 import { WorkflowService } from '../../../task-creation/data-access/workflow/workflow.service';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
+import { ButtonModule } from 'primeng/button';
+import { AvatarModule } from 'primeng/avatar';
+import { AvatarGroupModule } from 'primeng/avatargroup';
 
 @Component({
   selector: 'app-workflow-card',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ToastModule, ButtonModule, AvatarGroupModule, AvatarModule],
   templateUrl: './workflow-card.html',
   styleUrls: ['./workflow-card.css']
 })
@@ -33,6 +37,16 @@ export class WorkflowCardComponent {
   }
 
   deleteWorkflow() {
+    this.messageService.add({
+      key: 'deleteWorkflow',
+      severity: 'warn',
+      summary: 'Delete Workflow',
+      detail: `Are you sure you want to delete the workflow "${this.workflow.name}"?`,
+      sticky: true,
+      closable: true,
+    })
+  }
+  onDeleteConfirm(message: any) {
     this.workflowService.deleteWorkflow(this.workflow.id!).subscribe({
       next: () => {
         this.workflowDeleted.emit(this.workflow);
@@ -42,7 +56,15 @@ export class WorkflowCardComponent {
         console.error('Error deleting workflow:', error);
       }
     });
+    this.messageService.clear('deleteWorkflow');
   }
+
+  onDeleteRefuse(message: any) {
+
+    this.messageService.clear('deleteWorkflow');
+  }
+
+
   openWorkflowProgress() {
     console.log('Editing workflow:', this.workflow);
     this.router.navigate(['/workflow', this.workflow.id]);

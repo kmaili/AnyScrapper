@@ -21,10 +21,11 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "@angular/material/prebuilt-themes/azure-blue.css",
-              "src/styles.css"
-            ],
+          "styles": [
+            "node_modules/primeicons/primeicons.css",
+            "src/styles.css"
+          ],
+
             "scripts": []
           },
           "configurations": {
@@ -77,7 +78,6 @@
               }
             ],
             "styles": [
-              "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css"
             ]
           }

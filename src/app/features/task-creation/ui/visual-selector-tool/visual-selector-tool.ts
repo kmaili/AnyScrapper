@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { interval, Subscription } from 'rxjs';
 import { DomElementsSelectorWsService } from '../../data-access/dom-elements-selector/real-time-dom-elemnts-selector.service';
 import { DomElement } from '../../models/dom-element.model';
 import { HttpClientModule } from '@angular/common/http';
@@ -31,6 +31,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
 
   @Input() isRoot: boolean = true;
   @Input() isEditing: boolean = false;
+
+  @Input() parentStep!: Step;
 
   domElements: DomElement[] = [];
   private wsSubscription!: Subscription;
@@ -83,15 +85,22 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     { value: 'element_attribute_starts_with', label: 'Element Attribute Starts With', icon: 'format_color_text' },
     { value: 'element_attribute_ends_with', label: 'Element Attribute Ends With', icon: 'format_color_text' },
   ];
+
   ALL_ACTION_CHOICES: SelectOption[] = [...this.INTERACTION_ACTION_CHOICES, ...this.DATA_COLLECTION_ACTION_CHOICES];
 
   actionTypeChanged = new EventEmitter<{ stepId: number; newType: string }>();
 
-  constructor(private wsService: DomElementsSelectorWsService, private route: ActivatedRoute,
-    private workflowService: WorkflowService, private changeDetectorRef: ChangeDetectorRef
+  constructor(
+    private wsService: DomElementsSelectorWsService,
+    private route: ActivatedRoute,
+    private workflowService: WorkflowService,
+    private changeDetectorRef: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
+    const useChildIterableSelector = (this.parentStep && this.parentStep.loop
+    && this.parentStep.loop.loop_type === 'iterate_over_elements') ? true : undefined;
+    
     if (!this.steps || this.steps.length === 0) {
       this.steps = [
         {
@@ -103,6 +112,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
             step: 1,
             action_type: 'data_collection',
             action_name: 'element_text',
+            fallback_selector: undefined,
+            useChildIterableSelector: useChildIterableSelector
           }
         }
       ];
@@ -128,54 +139,187 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     return element.id;
   }
 
-  addStep(type: 'action' | 'condition' | 'loop') {
-    const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
-    const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
-    let newStep: Step;
+addStep(type: 'action' | 'condition' | 'loop') {
+  const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
+  const defaultSelector = undefined;
+  const useChildIterableSelector = (this.parentStep && this.parentStep.loop
+    && this.parentStep.loop.loop_type === 'iterate_over_elements') ? true : undefined;
+  let newStep: Step;
 
-    if (type === 'action') {
-      newStep = {
-        id: newId,
-        step_type: 'action',
-        order: this.steps.length + 1,
-        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
-        action: {
-          step: newId,
-          action_type: 'data_collection',
-          action_name: 'element_text',
-        }
-      };
-    } else if (type === 'condition') {
-      newStep = {
-        id: newId,
-        step_type: 'condition',
-        order: this.steps.length + 1,
-        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
-        condition: {
-          step: newId,
-          condition_type: 'element_found',
-          selector: defaultSelector,
-          if_true_child_steps: [],
-          if_false_child_steps: []
-        }
-      };
-    } else { // type === 'loop'
-      newStep = {
-        id: newId,
-        step_type: 'loop',
-        order: this.steps.length + 1,
-        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
-        loop: {
-          step: newId,
-          loop_type: 'fixed_iterations',
-          iterations_count: 1,
-          child_steps: []
-        }
-      };
+  if (type === 'action') {
+    newStep = {
+      id: newId,
+      step_type: 'action',
+      order: this.steps.length + 1,
+      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+      action: {
+        step: newId,
+        action_type: 'data_collection',
+        action_name: 'element_text',
+        fallback_selector: undefined,
+        useChildIterableSelector: useChildIterableSelector
+      }
+    };
+  } else if (type === 'condition') {
+    newStep = {
+      id: newId,
+      step_type: 'condition',
+      order: this.steps.length + 1,
+      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+      condition: {
+        step: newId,
+        condition_type: 'element_found',
+        selector: defaultSelector,
+        fallback_selector: undefined,
+        if_true_child_steps: [],
+        if_false_child_steps: [],
+        useChildIterableSelector: useChildIterableSelector
+      }
+    };
+  } else {
+    newStep = {
+      id: newId,
+      step_type: 'loop',
+      order: this.steps.length + 1,
+      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+      loop: {
+        step: newId,
+        loop_type: 'fixed_iterations',
+        iterations_count: 1,
+        child_steps: [],
+        condition_element_selector: defaultSelector,
+        fallback_selector: undefined,
+        parent_iterable_element_selector: defaultSelector,
+        parent_iterable_element_selector_fallback: undefined,
+        child_iterable_element_selector: defaultSelector,
+        child_iterable_element_selector_fallback: undefined,
+        useChildIterableSelector: useChildIterableSelector
+      }
+    };
+  }
+  this.steps.push(newStep);
+  this.isExpanded[this.steps.length - 1] = true;
+  this.reorderSteps();
+  this.emitChanges();
+}
+
+addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event) {
+  event.stopPropagation();
+  const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
+  const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
+  let newStep: Step;
+
+  if (type === 'action') {
+    newStep = {
+      id: newId,
+      step_type: 'action',
+      order: this.steps[index].order,
+      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+      action: {
+        step: newId,
+        action_type: 'data_collection',
+        action_name: 'element_text',
+        fallback_selector: undefined
+      }
+    };
+  } else if (type === 'condition') {
+    newStep = {
+      id: newId,
+      step_type: 'condition',
+      order: this.steps[index].order,
+      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+      condition: {
+        step: newId,
+        condition_type: 'element_found',
+        selector: defaultSelector,
+        fallback_selector: undefined,
+        if_true_child_steps: [],
+        if_false_child_steps: []
+      }
+    };
+  } else {
+    newStep = {
+      id: newId,
+      step_type: 'loop',
+      order: this.steps[index].order,
+      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+      loop: {
+        step: newId,
+        loop_type: 'fixed_iterations',
+        iterations_count: 1,
+        child_steps: [],
+        condition_element_selector: defaultSelector,
+        fallback_selector: undefined,
+        parent_iterable_element_selector: defaultSelector,
+        parent_iterable_element_selector_fallback: undefined,
+        child_iterable_element_selector: defaultSelector,
+        child_iterable_element_selector_fallback: undefined
+      }
+    };
+  }
+  this.steps.splice(index, 0, newStep);
+  this.isExpanded[index] = true;
+  this.reorderSteps();
+  this.emitChanges();
+}
+
+  duplicateStep(index: number, event: Event) {
+    event.stopPropagation();
+    const stepToDuplicate = this.steps[index];
+    const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
+    const newStep: Step = JSON.parse(JSON.stringify(stepToDuplicate)); // Deep copy
+    newStep.id = newId;
+    newStep.order = stepToDuplicate.order + 1;
+
+    if (newStep.action) {
+      newStep.action.step = newId;
+      newStep.action.fallback_selector = stepToDuplicate.action?.fallback_selector || undefined; // Copy fallback_selector
     }
-    this.steps.push(newStep);
-    this.isExpanded[this.steps.length - 1] = true;
+    if (newStep.condition) {
+      newStep.condition.step = newId;
+      newStep.condition.fallback_selector = stepToDuplicate.condition?.fallback_selector || undefined; // Copy fallback_selector
+      newStep.condition.if_true_child_steps = this.deepCopySteps(newStep.condition.if_true_child_steps!, newId);
+      newStep.condition.if_false_child_steps = this.deepCopySteps(newStep.condition.if_false_child_steps!, newId);
+    }
+    if (newStep.loop) {
+      newStep.loop.step = newId;
+      newStep.loop.fallback_selector = stepToDuplicate.loop?.fallback_selector || undefined; // Copy fallback_selector
+      newStep.loop.child_steps = this.deepCopySteps(newStep.loop.child_steps, newId);
+    }
+
+    this.steps.splice(index + 1, 0, newStep);
+    this.isExpanded[index + 1] = true;
+    this.reorderSteps();
     this.emitChanges();
+  }
+
+  private deepCopySteps(steps: Step[] | undefined, parentStepId: number): Step[] {
+    if (!steps) return [];
+    const newIdBase = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
+    return steps.map((step, i) => {
+      const newStep: Step = JSON.parse(JSON.stringify(step));
+      newStep.id = newIdBase + i;
+      newStep.order = i + 1;
+      newStep.workflow = step.workflow;
+      newStep.parent_loop = step.parent_loop || parentStepId;
+
+      if (newStep.action) {
+        newStep.action.step = newStep.id;
+        newStep.action.fallback_selector = step.action?.fallback_selector || undefined; // Copy fallback_selector
+      }
+      if (newStep.condition) {
+        newStep.condition.step = newStep.id;
+        newStep.condition.fallback_selector = step.condition?.fallback_selector || undefined; // Copy fallback_selector
+        newStep.condition.if_true_child_steps = this.deepCopySteps(newStep.condition.if_true_child_steps!, newStep.id);
+        newStep.condition.if_false_child_steps = this.deepCopySteps(newStep.condition.if_false_child_steps!, newStep.id);
+      }
+      if (newStep.loop) {
+        newStep.loop.step = newStep.id;
+        newStep.loop.fallback_selector = step.loop?.fallback_selector || undefined; // Copy fallback_selector
+        newStep.loop.child_steps = this.deepCopySteps(newStep.loop.child_steps, newStep.id);
+      }
+      return newStep;
+    });
   }
 
   deleteStep(index: number, event: Event) {
@@ -193,60 +337,18 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       }
     });
     this.isExpanded = newIsExpanded;
-
+    this.reorderSteps();
     this.emitChanges();
   }
 
-  addNestedStep(parentStep: Step, branch: 'if_true_child_steps' | 'if_false_child_steps' | 'child_steps', parentIndex: number) {
-    const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
-    const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
-    let order = 1;
-    let nestedSteps: Step[] | null | undefined;
-
-    if (parentStep.step_type === 'condition' && parentStep.condition && (branch === 'if_true_child_steps' || branch === 'if_false_child_steps')) {
-      nestedSteps = parentStep.condition[branch];
-      order = (nestedSteps?.length || 0) + 1;
-    } else if (parentStep.step_type === 'loop' && parentStep.loop && branch === 'child_steps') {
-      nestedSteps = parentStep.loop.child_steps;
-      order = (nestedSteps?.length || 0) + 1;
-    }
-
-    const newNestedStep: Step = {
-      id: newId,
-      step_type: 'action',
-      order: order,
-      workflow: parentStep.workflow,
-      parent_loop: parentStep.step_type === 'loop' ? parentStep.id : parentStep.parent_loop,
-      action: {
-        step: newId,
-        action_type: 'data_collection',
-        action_name: 'element_text',
-      }
-    };
-
-    if (parentStep.step_type === 'condition' && parentStep.condition && (branch === 'if_true_child_steps' || branch === 'if_false_child_steps')) {
-      if (!parentStep.condition[branch]) {
-        parentStep.condition[branch] = [];
-      }
-      parentStep.condition[branch]!.push(newNestedStep);
-    } else if (parentStep.step_type === 'loop' && parentStep.loop && branch === 'child_steps') {
-      if (!parentStep.loop.child_steps) {
-        parentStep.loop.child_steps = [];
-      }
-      parentStep.loop.child_steps!.push(newNestedStep);
-    }
-
-    this.steps.splice(parentIndex + 1, 0, newNestedStep);
-    this.isExpanded[this.steps.length - 1] = true;
-    this.emitChanges();
-  }
 
   updateStepType(index: number, stepType: 'action' | 'condition' | 'loop') {
     const originalStep = this.steps[index];
     const newId = originalStep.id;
     const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
     let newStep: Step;
-
+    const useChildIterableSelector = (this.parentStep && this.parentStep.loop
+    && this.parentStep.loop.loop_type === 'iterate_over_elements') ? true : undefined;
     if (stepType === 'action') {
       newStep = {
         id: newId,
@@ -257,6 +359,7 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
           step: newId,
           action_type: 'data_collection',
           action_name: 'element_text',
+          useChildIterableSelector: useChildIterableSelector
         }
       };
     } else if (stepType === 'condition') {
@@ -270,10 +373,11 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
           condition_type: 'element_found',
           selector: defaultSelector,
           if_true_child_steps: [],
-          if_false_child_steps: []
+          if_false_child_steps: [],
+          useChildIterableSelector: useChildIterableSelector
         }
       };
-    } else { // stepType === 'loop'
+    } else {
       newStep = {
         id: newId,
         step_type: 'loop',
@@ -283,11 +387,13 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
           step: newId,
           loop_type: 'fixed_iterations',
           iterations_count: 1,
-          child_steps: []
+          child_steps: [],
+          useChildIterableSelector: useChildIterableSelector
         }
       };
     }
     this.steps[index] = newStep;
+    this.reorderSteps();
     this.emitChanges();
   }
 
@@ -331,23 +437,25 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       step.action.url = step.action.url || '';
       delete step.action.attribute;
       delete step.action.expected_value;
-    } else if (actionName === 'element_get_attribute_value' || actionName.includes('element_check_attribute')) {
-      step.action.attribute = step.action.attribute || '';
+      delete step.action.fallback_selector; // Clear fallback if not needed
+    } else if (this.requiresSelector(actionName)) {
+      const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
+      step.action.selector = step.action.selector || defaultSelector;
+      step.action.fallback_selector = step.action.fallback_selector || undefined; // Preserve or initialize fallback
       delete step.action.url;
       if (actionName.includes('element_check_attribute_value_')) {
         step.action.expected_value = step.action.expected_value || '';
       } else {
         delete step.action.expected_value;
       }
-    } else if (actionName === 'element_input_text') {
-      step.action.expected_value = step.action.expected_value || '';
-      delete step.action.attribute;
-      delete step.action.url;
-    } else if (actionName === 'element_clear_input' || actionName === 'element_hover') {
-      delete step.action.attribute;
-      delete step.action.expected_value;
-      delete step.action.url;
+      if (actionName === 'element_get_attribute_value' || actionName.includes('element_check_attribute')) {
+        step.action.attribute = step.action.attribute || '';
+      } else {
+        delete step.action.attribute;
+      }
     } else {
+      delete step.action.selector;
+      delete step.action.fallback_selector;
       delete step.action.url;
       delete step.action.attribute;
       delete step.action.expected_value;
@@ -358,26 +466,53 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     this.emitChanges();
   }
 
-  updateLoopType(index: number, loopType: 'fixed_iterations' | 'until_condition') {
-    const step = this.steps[index];
-    if (step.step_type !== 'loop' || !step.loop) return;
-    step.loop.loop_type = loopType;
+  updateLoopType(index: number, loopType: 'fixed_iterations' | 'until_condition' | 'iterate_over_elements') {
+  const step = this.steps[index];
+  if (step.step_type !== 'loop' || !step.loop) return;
+  step.loop.loop_type = loopType;
 
-    const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
+  const defaultSelector = this.domElements.length > 0 ? this.mapDomElementToSelector(this.domElements[0]) : -1;
 
-    if (loopType === 'fixed_iterations') {
-      delete step.loop.condition_type;
-      delete step.loop.condition_element_selector;
-      delete step.loop.condition_element_attribute;
-      delete step.loop.condition_attribute_value;
-      step.loop.iterations_count = step.loop.iterations_count || 1;
-    } else { // 'until_condition'
-      delete step.loop.iterations_count;
-      step.loop.condition_element_selector = step.loop.condition_element_selector || defaultSelector;
-      step.loop.condition_type = step.loop.condition_type || 'element_found';
-    }
-    this.emitChanges();
+  if (loopType === 'fixed_iterations') {
+    delete step.loop.condition_type;
+    delete step.loop.condition_element_selector;
+    delete step.loop.fallback_selector;
+    delete step.loop.condition_element_attribute;
+    delete step.loop.condition_attribute_value;
+    step.loop.iterations_count = step.loop.iterations_count || 1;
+    step.loop.child_steps?.forEach(step => { this.useChildIterableSelectorInStep(step, undefined) })
+  } else if (loopType === 'until_condition') {
+    delete step.loop.iterations_count;
+    step.loop.condition_element_selector = step.loop.condition_element_selector || defaultSelector;
+    step.loop.fallback_selector = step.loop.fallback_selector || undefined;
+    step.loop.condition_type = step.loop.condition_type || 'element_found';
+    step.loop.child_steps?.forEach(step => { this.useChildIterableSelectorInStep(step, undefined) })
+
+  } else if (loopType === 'iterate_over_elements') {
+    delete step.loop.iterations_count;
+    delete step.loop.condition_type;
+    delete step.loop.condition_element_selector;
+    delete step.loop.fallback_selector;
+    delete step.loop.condition_element_attribute;
+    delete step.loop.condition_attribute_value;
+    step.loop.parent_iterable_element_selector = step.loop.parent_iterable_element_selector || defaultSelector;
+    step.loop.parent_iterable_element_selector_fallback = step.loop.parent_iterable_element_selector_fallback || undefined;
+    step.loop.child_iterable_element_selector = step.loop.child_iterable_element_selector || defaultSelector;
+    step.loop.child_iterable_element_selector_fallback = step.loop.child_iterable_element_selector_fallback || undefined;
+    step.loop.child_steps?.forEach(step => { this.useChildIterableSelectorInStep(step, false) })
   }
+  this.emitChanges();
+}
+
+  useChildIterableSelectorInStep(step: Step, isUsed: undefined | boolean){
+    if (step.step_type === 'action')
+        step.action!.useChildIterableSelector = isUsed;
+      else if (step.step_type === 'condition')
+        step.condition!.useChildIterableSelector = isUsed;
+      else if (step.step_type === 'loop')
+        step.loop!.useChildIterableSelector = isUsed;
+  }
+
 
   onNestedStepsChange(parentStep: Step, branch: 'if_true_child_steps' | 'if_false_child_steps' | 'child_steps', updatedSteps: Step[]) {
     if (parentStep.step_type === 'condition' && parentStep.condition && (branch === 'if_true_child_steps' || branch === 'if_false_child_steps')) {
@@ -419,7 +554,6 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
       alert('Failed to export JSON. Check console for details.');
     }
   }
-
 
   emitChanges() {
     this.stepsChange.emit([...this.steps]);
@@ -477,13 +611,12 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   }
 
   completeWorkflow() {
-      this.workflow.emit({
-        name: this.initialized_workflow.name,
-        startUrl: this.initialized_workflow.startUrl,
-        steps: this.steps
-      });
+    this.workflow.emit({
+      name: this.initialized_workflow.name,
+      startUrl: this.initialized_workflow.startUrl,
+      steps: this.steps
+    });
   }
-  
 
   private getActionType(actionName: string): 'interaction' | 'data_collection' {
     const choice = this.getAllActionChoices().find(c => c.value === actionName);

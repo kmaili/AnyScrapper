@@ -9,7 +9,7 @@
     </button>
     <nav class="nav-links" [class.mobile-menu]="isMobile" [@menuAnimation]="isMenuOpen ? 'open' : 'closed'">
       <ng-container *ngIf="isLoggedIn$ | async as isLoggedIn">
-        <a routerLink="/dashboard" class="nav-button" (click)="isMenuOpen = false">Dashboard</a>
+        <a routerLink="/" class="nav-button" (click)="isMenuOpen = false">Dashboard</a>
         <button class="nav-button" (click)="authService.logout(); isMenuOpen = false">Logout</button>
         <div class="profile-dropdown">
           <button class="profile-button" (click)="toggleProfile()">Profile</button>

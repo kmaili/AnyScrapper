@@ -1,0 +1,48 @@
+
+    <div class="custom-select-container" [class.open]="isOpen">
+      <button 
+        type="button"
+        class="custom-select-button"
+        (click)="toggleDropdown()"
+        [class.focused]="isOpen">
+        <div class="select-content">
+          <span *ngIf="selectedOption" class="material-icons select-icon">{{ selectedOption.icon }}</span>
+          <span class="select-text" [class.placeholder]="!selectedOption">
+            {{ selectedOption ? selectedOption.label : placeholder }}
+          </span>
+        </div>
+        <span class="material-icons chevron" [class.rotated]="isOpen">expand_more</span>
+      </button>
+
+      <div *ngIf="isOpen" class="custom-dropdown">
+        <div class="search-container" *ngIf="searchable">
+          <span class="material-icons search-icon">search</span>
+          <input 
+            #searchInput
+            type="text"
+            class="search-input"
+            placeholder="Search options..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            (keydown.escape)="closeDropdown()"
+            (keydown.enter)="selectFirstFiltered($event)">
+        </div>
+        
+        <div class="options-container">
+          <div 
+            *ngFor="let option of filteredOptions; trackBy: trackByValue"
+            class="custom-option"
+            [class.selected]="option.value === value"
+            (click)="selectOption(option)">
+            <span class="material-icons option-icon">{{ option.icon }}</span>
+            <span class="option-text">{{ option.label }}</span>
+            <span *ngIf="option.value === value" class="material-icons check-icon">check</span>
+          </div>
+          
+          <div *ngIf="filteredOptions.length === 0" class="no-options">
+            <span class="material-icons">search_off</span>
+            <span>No options found</span>
+          </div>
+        </div>
+      </div>
+    </div>

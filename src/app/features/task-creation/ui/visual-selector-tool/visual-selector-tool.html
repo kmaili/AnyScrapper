@@ -1,6 +1,6 @@
 <div class="visual-selector-wrapper">
   <div class="main-content">
-    <div class="header" *ngIf="isRoot && ! isEditing">
+    <div class="header" *ngIf="isRoot && !isEditing">
       {{ initialized_workflow.startUrl }}
     </div>
     <div class="visual-selector-container">
@@ -13,7 +13,26 @@
               <span class="step-tag" *ngIf="step.tag">({{ step.tag }})</span>
             </div>
             <div class="step-actions">
-              <button (click)="deleteStep(i, $event)" class="btn btn-icon btn-danger" title="Delete Step">
+              <div class="dropdown">
+                <button class="btn btn-icon btn-add" title="Add Step Before" aria-label="Add Step Before">
+                  <span class="material-icons">add_circle</span>
+                </button>
+                <div class="dropdown-content">
+                  <button (click)="addStepBefore(i, 'action', $event)" class="btn btn-add-action" title="Add Action Before" aria-label="Add Action Before">
+                    <span class="material-icons">play_arrow</span> Action
+                  </button>
+                  <button (click)="addStepBefore(i, 'condition', $event)" class="btn btn-add-condition" title="Add Condition Before" aria-label="Add Condition Before">
+                    <span class="material-icons">rule</span> Condition
+                  </button>
+                  <button (click)="addStepBefore(i, 'loop', $event)" class="btn btn-add-loop" title="Add Loop Before" aria-label="Add Loop Before">
+                    <span class="material-icons">loop</span> Loop
+                  </button>
+                </div>
+              </div>
+              <button (click)="duplicateStep(i, $event)" class="btn btn-icon btn-secondary" title="Duplicate Step" aria-label="Duplicate Step">
+                <span class="material-icons">content_copy</span>
+              </button>
+              <button (click)="deleteStep(i, $event)" class="btn btn-icon btn-danger" title="Delete Step" aria-label="Delete Step">
                 <span class="material-icons">delete</span>
               </button>
               <span class="material-icons collapse-icon">{{ isExpanded[i] ? 'expand_less' : 'expand_more' }}</span>
@@ -27,11 +46,11 @@
               </label>
               <input [(ngModel)]="step.tag" class="form-control" placeholder="Enter tag name (e.g., Step1)">
             </div>
-
             <div class="form-group">
               <label class="form-label">
                 <span class="material-icons">category</span> Type
               </label>
+
               <app-custom-select
                 [value]="step.step_type"
                 [options]="[{ value: 'action', label: 'Action', icon: 'play_arrow' }, { value: 'condition', label: 'Condition', icon: 'rule' }, { value: 'loop', label: 'Loop', icon: 'loop' }]"
@@ -85,12 +104,16 @@
                 </label>
                 <input [(ngModel)]="step.action.url" class="form-control" placeholder="https://example.com">
               </div>
-
               <div *ngIf="requiresSelector(step.action.action_name)" class="form-group">
+                
+                <div>
+                  <input type="checkbox" [(ngModel)]="step.action.useChildIterableSelector" *ngIf="step.action.useChildIterableSelector !== undefined" />
+                  <label>use child element selector</label>
+                </div>
                 <label class="form-label">
                   <span class="material-icons">find_in_page</span> Selector
                 </label>
-                <select [(ngModel)]="step.action.selector" class="form-control" [disabled]="domElements.length === 0">
+                <select [(ngModel)]="step.action.selector" class="form-control" [disabled]="domElements.length === 0 || step.action.useChildIterableSelector === true">
                   <option [value]="null" disabled selected>Select a selector</option>
                   <option *ngFor="let element of domElements" [value]="element.id">
                     {{ element.tag_name }} - {{ element.attributes | json }}
@@ -98,6 +121,21 @@
                   <option *ngIf="domElements.length === 0" [value]="null" disabled>No elements available</option>
                 </select>
                 <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
+              </div>
+
+              <div *ngIf="requiresSelector(step.action.action_name)" class="form-group">
+                <label class="form-label">
+                  <span class="material-icons">backup</span> Fallback Selector (optional)
+                </label>
+                <select [(ngModel)]="step.action.fallback_selector" class="form-control" [disabled]="domElements.length === 0 || !step.action.selector">
+                  <option [value]="null" disabled selected>Select a fallback selector (optional)</option>
+                  <option *ngFor="let element of domElements" [value]="element.id">
+                    {{ element.tag_name }} - {{ element.attributes | json }}
+                  </option>
+                  <option *ngIf="domElements.length === 0" [value]="null" disabled>No fallback elements available</option>
+                </select>
+                <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable fallback selection.</small>
+                <small *ngIf="!step.action.selector" class="text-info">Select a primary selector first.</small>
               </div>
 
               <div *ngIf="step.action.action_type === 'data_collection' && (step.action.action_name === 'element_get_attribute_value' || step.action.action_name.includes('element_check_attribute'))" class="form-group">
@@ -149,6 +187,21 @@
                 <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
               </div>
 
+              <div *ngIf="step.condition.selector" class="form-group"> <!-- Tie to primary selector presence -->
+                <label class="form-label">
+                  <span class="material-icons">backup</span> Fallback Selector (optional)
+                </label>
+                <select [(ngModel)]="step.condition.fallback_selector" class="form-control" [disabled]="domElements.length === 0 || !step.condition.selector">
+                  <option [value]="null" disabled selected>Select a fallback selector (optional)</option>
+                  <option *ngFor="let element of domElements" [value]="element.id">
+                    {{ element.tag_name }} - {{ element.attributes | json }}
+                  </option>
+                  <option *ngIf="domElements.length === 0" [value]="null" disabled>No fallback elements available</option>
+                </select>
+                <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable fallback selection.</small>
+                <small *ngIf="!step.condition.selector" class="text-info">Select a primary selector first.</small>
+              </div>
+
               <div *ngIf="step.condition.condition_type?.includes('attribute_')" class="form-group">
                 <label class="form-label">
                   <span class="material-icons">description</span> Attribute Name
@@ -181,7 +234,11 @@
                 </label>
                 <app-custom-select
                   [value]="step.loop.loop_type"
-                  [options]="[{ value: 'fixed_iterations', label: 'Fixed Iterations', icon: 'repeat' }, { value: 'until_condition', label: 'Until Condition', icon: 'rule' }]"
+                  [options]="[
+                    { value: 'fixed_iterations', label: 'Fixed Iterations', icon: 'repeat' },
+                    { value: 'until_condition', label: 'Until Condition', icon: 'rule' },
+                    { value: 'iterate_over_elements', label: 'Iterate Over Elements', icon: 'list' }
+                  ]"
                   placeholder="Select Loop Type"
                   (valueChange)="updateLoopType(i, $event)">
                 </app-custom-select>
@@ -225,6 +282,21 @@
                 <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
               </div>
 
+              <div *ngIf="step.loop.condition_element_selector" class="form-group">
+                <label class="form-label">
+                  <span class="material-icons">backup</span> Fallback Selector (optional)
+                </label>
+                <select [(ngModel)]="step.loop.fallback_selector" class="form-control" [disabled]="domElements.length === 0 || !step.loop.condition_element_selector">
+                  <option [value]="null" disabled selected>Select a fallback selector (optional)</option>
+                  <option *ngFor="let element of domElements" [value]="element.id">
+                    {{ element.tag_name }} - {{ element.attributes | json }}
+                  </option>
+                  <option *ngIf="domElements.length === 0" [value]="null" disabled>No fallback elements available</option>
+                </select>
+                <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable fallback selection.</small>
+                <small *ngIf="!step.loop.condition_element_selector" class="text-info">Select a primary selector first.</small>
+              </div>
+
               <div *ngIf="step.loop.loop_type === 'until_condition' && step.loop.condition_type?.includes('attribute_')" class="form-group">
                 <label class="form-label">
                   <span class="material-icons">description</span> Stop Condition Attribute Name
@@ -239,36 +311,94 @@
                 <input [(ngModel)]="step.loop.condition_attribute_value" class="form-control" placeholder="Expected value">
               </div>
 
+              <div *ngIf="step.loop.loop_type === 'iterate_over_elements'" class="form-group">
+                <label class="form-label">
+                  <span class="material-icons">list</span> Parent Iterable Element Selector
+                </label>
+                <select [(ngModel)]="step.loop.parent_iterable_element_selector" class="form-control" [disabled]="domElements.length === 0">
+                  <option [value]="null" disabled selected>Select a parent selector</option>
+                  <option *ngFor="let element of domElements" [value]="element.id">
+                    {{ element.tag_name }} - {{ element.attributes | json }}
+                  </option>
+                  <option *ngIf="domElements.length === 0" [value]="null" disabled>No elements available</option>
+                </select>
+                <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
+              </div>
+
+              <div *ngIf="step.loop.parent_iterable_element_selector" class="form-group">
+                <label class="form-label">
+                  <span class="material-icons">backup</span> Parent Fallback Selector (optional)
+                </label>
+                <select [(ngModel)]="step.loop.parent_iterable_element_selector_fallback" class="form-control" [disabled]="domElements.length === 0 || !step.loop.parent_iterable_element_selector">
+                  <option [value]="null" disabled selected>Select a fallback selector (optional)</option>
+                  <option *ngFor="let element of domElements" [value]="element.id">
+                    {{ element.tag_name }} - {{ element.attributes | json }}
+                  </option>
+                  <option *ngIf="domElements.length === 0" [value]="null" disabled>No fallback elements available</option>
+                </select>
+                <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable fallback selection.</small>
+                <small *ngIf="!step.loop.parent_iterable_element_selector" class="text-info">Select a primary parent selector first.</small>
+              </div>
+
+              <div *ngIf="step.loop.loop_type === 'iterate_over_elements'" class="form-group">
+                <label class="form-label">
+                  <span class="material-icons">list</span> Child Iterable Element Selector
+                </label>
+                <select [(ngModel)]="step.loop.child_iterable_element_selector" class="form-control" [disabled]="domElements.length === 0">
+                  <option [value]="null" disabled selected>Select a child selector</option>
+                  <option *ngFor="let element of domElements" [value]="element.id">
+                    {{ element.tag_name }} - {{ element.attributes | json }}
+                  </option>
+                  <option *ngIf="domElements.length === 0" [value]="null" disabled>No elements available</option>
+                </select>
+                <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
+              </div>
+
+              <div *ngIf="step.loop.child_iterable_element_selector" class="form-group">
+                <label class="form-label">
+                  <span class="material-icons">backup</span> Child Fallback Selector (optional)
+                </label>
+                <select [(ngModel)]="step.loop.child_iterable_element_selector_fallback" class="form-control" [disabled]="domElements.length === 0 || !step.loop.child_iterable_element_selector">
+                  <option [value]="null" disabled selected>Select a fallback selector (optional)</option>
+                  <option *ngFor="let element of domElements" [value]="element.id">
+                    {{ element.tag_name }} - {{ element.attributes | json }}
+                  </option>
+                  <option *ngIf="domElements.length === 0" [value]="null" disabled>No fallback elements available</option>
+                </select>
+                <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable fallback selection.</small>
+                <small *ngIf="!step.loop.child_iterable_element_selector" class="text-info">Select a primary child selector first.</small>
+              </div>
+
               <div class="nested-steps">
                 <div class="nested-title"><span class="material-icons">list</span> Loop Steps</div>
-                <app-visual-selector-tool [isRoot]="false" *ngIf="step.loop?.child_steps" [steps]="step.loop!.child_steps!" (stepsChange)="onNestedStepsChange(step, 'child_steps', $event)" [initialized_workflow]="initialized_workflow"></app-visual-selector-tool>
+                <app-visual-selector-tool [parentStep]="step" [isRoot]="false" *ngIf="step.loop?.child_steps" [steps]="step.loop!.child_steps!" (stepsChange)="onNestedStepsChange(step, 'child_steps', $event)" [initialized_workflow]="initialized_workflow"></app-visual-selector-tool>
               </div>
             </ng-container>
           </div>
         </div>
 
         <div class="actions-bar">
-          <button (click)="addStep('action')" class="btn btn-icon btn-add-action" title="Add Action">
+          <button (click)="addStep('action')" class="btn btn-add-action" title="Add Action" aria-label="Add Action">
             <span class="material-icons">play_arrow</span> Action
           </button>
-          <button (click)="addStep('condition')" class="btn btn-icon btn-add-condition" title="Add Condition">
+          <button (click)="addStep('condition')" class="btn btn-add-condition" title="Add Condition" aria-label="Add Condition">
             <span class="material-icons">rule</span> Condition
           </button>
-          <button (click)="addStep('loop')" class="btn btn-icon btn-add-loop" title="Add Loop">
+          <button (click)="addStep('loop')" class="btn btn-add-loop" title="Add Loop" aria-label="Add Loop">
             <span class="material-icons">loop</span> Loop
           </button>
         </div>
-
-        <button *ngIf="isRoot" (click)="exportToJson()" class="fab btn-export" title="Export as JSON">
-          <span class="material-icons">file_download</span>
-        </button>
       </div>
     </div>
-    <button *ngIf="isRoot" (click)="completeWorkflow()" class="btn btn-primary btn-block mt-4 text-white font-weight-bold py-2">
-      <!--new or update-->
-      <span *ngIf="!isEditing; else update">Create Workflow</span>
-      <ng-template #update>Update Workflow</ng-template>
-
-    </button>
+    <div>
+      <button *ngIf="isRoot" (click)="exportToJson()" class="btn btn-fab m-1" title="Export as JSON" aria-label="Export as JSON">
+          <span class="material-icons">file_download</span>
+          Export
+      </button>
+      <button *ngIf="isRoot" (click)="completeWorkflow()" class="btn btn-primary" title="Create or Update Workflow" aria-label="Create or Update Workflow">
+        <span *ngIf="!isEditing; else update">Create Workflow</span>
+        <ng-template #update>Update Workflow</ng-template>
+      </button>
+    </div>
   </div>
 </div>

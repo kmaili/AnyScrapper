@@ -37,3 +37,15 @@
             </div>
         </div>
     </div>
+<p-toast key="deleteWorkflow" [baseZIndex]="10000" position="center">
+  <ng-template let-message pTemplate="message">
+    <div class="flex flex-column">
+      <div class="font-bold mb-2">{{ message.summary }}</div>
+      <div class="mb-3">{{ message.detail }}</div>
+      <div class="flex justify-content-end gap-2">
+        <button pButton label="Confirm" (click)="onDeleteConfirm(message)" class="p-button-sm p-button-success"></button>
+        <button pButton label="Refuse" (click)="onDeleteRefuse(message)" class="p-button-sm p-button-danger"></button>
+      </div>
+    </div>
+  </ng-template>
+</p-toast>
