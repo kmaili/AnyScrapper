@@ -16,6 +16,5 @@ export interface Loop {
   child_iterable_element_selector?: number;
   child_iterable_element_selector_fallback?: number;
 
-  child_steps?: Step[];  // IMPORTANT: nested steps inside this loop
-  useChildIterableSelector?: boolean;
+  child_steps?: Step[];
 }

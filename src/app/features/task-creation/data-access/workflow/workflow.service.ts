@@ -43,4 +43,12 @@ export class WorkflowService {
   deleteWorkflow(workflowId: number) {
     return this.http.delete(`http://localhost:8000/api/workflows/${workflowId}/`);
   }
+
+  shareWorkflow(workflowId: number) {
+    return this.http.post(`http://localhost:8000/api/workflows/share/${workflowId}/`, {})
+  }
+
+  accessSharedWorkflow(token: string) {
+    return this.http.post(`http://localhost:8000/api/workflows/access-shared/${token}/`, {})
+  }
 }

@@ -15,6 +15,7 @@ import { MessageService } from 'primeng/api';
 })
 export class TaskListPageComponent implements OnInit {
   workflow_list: Workflow[] = [];
+  shared_with_workflow_list: Workflow[] = [];
   loaded = false;
 
   constructor(
@@ -29,11 +30,12 @@ export class TaskListPageComponent implements OnInit {
 
   loadUserWorkflows() {
   this.workflowService.get_workflows().subscribe({
-    next: (workflows: Workflow[]) => {
-      this.workflow_list = workflows ?? [];
+    next: (response: any) => {
+      this.workflow_list = response.workflows ?? [];
+      this.shared_with_workflow_list = response.shared_with_workflows;
       this.loaded = true;
       this.cdr.detectChanges(); // Forcer la détection des changements
-      console.log('Workflows loaded:', this.workflow_list);
+      console.log('Workflows loaded:', this.shared_with_workflow_list);
     },
     error: (err) => {
       console.error('Erreur lors du chargement des workflows:', err);

@@ -11,6 +11,7 @@ export interface Step {
   parent_loop?: number;  // FK to Loop id, nullable
   order: number;
   status? : 'finished' | 'failed' | 'not-executed' | 'executing';
+  useChildIterableSelector?: boolean;
 
   // Detailed step data depending on type
   action?: Action;

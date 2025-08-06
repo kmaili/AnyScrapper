@@ -1,51 +1,58 @@
+<div class="sharing-token" *ngIf="sharingToken">
+    <p>{{sharingToken}}</p>
+</div>
 <div class="workflow-card">
-        <div class="workflow-card-content">
-            <div class="workflow-title">{{workflow.name}}</div>
-            <div class="workflow-url">
-                <span>URL:</span>
-                <a href="{{workflow.startUrl}}" target="_blank">{{workflow.startUrl}}</a>
-            </div>
-            <div class="workflow-status">
-                <span>Status:</span>
-                <span class="status-badge {{workflow.status}}">{{workflow.status}}</span>
-            </div>
-            <div class="workflow-actions">
-                <button class="button small primary" (click)="executeWorkflow()">
-                    <i class="pi pi-play-circle"></i>
-                    Start
-                </button>
-                <button class="button small primary" (click)="editWorkflow()">
-                    <i class="pi pi-pencil"></i>
-                    Edit
-                </button>
-                <button class="button small primary" (click)="openWorkflowProgress()">
-                    <div class="d-flex align-items-center gap-1" *ngIf="workflow.status === 'in_progress' else done">
-                        <span class="material-icons">trending_up</span>
-                        Progress
-                    </div>
-                    <ng-template #done>
-                        <div class="d-flex align-items-center gap-1">
-                            <span class="material-icons">done</span>
-                            Results
-                        </div>
-                    </ng-template>
-                </button>
-                <button class="button small danger" (click)="deleteWorkflow()">
-                    <i class="pi pi-trash"></i>
-                    Delete
-                </button>
-            </div>
-        </div>
-    </div>
-<p-toast key="deleteWorkflow" [baseZIndex]="10000" position="center">
-  <ng-template let-message pTemplate="message">
-    <div class="flex flex-column">
-      <div class="font-bold mb-2">{{ message.summary }}</div>
-      <div class="mb-3">{{ message.detail }}</div>
-      <div class="flex justify-content-end gap-2">
-        <button pButton label="Confirm" (click)="onDeleteConfirm(message)" class="p-button-sm p-button-success"></button>
-        <button pButton label="Refuse" (click)="onDeleteRefuse(message)" class="p-button-sm p-button-danger"></button>
+  <div class="workflow-card-content">
+    <div class="workflow-info">
+      <div class="workflow-title">{{workflow.name}}</div>
+      <div class="workflow-url">
+        <span>URL:</span>
+        <a href="{{workflow.startUrl}}" target="_blank">{{workflow.startUrl.slice(0, 50)}}...</a>
+      </div>
+      <div class="workflow-status">
+        <span>Status:</span>
+        <span class="status-badge {{workflow.status}}">{{workflow.status}}</span>
       </div>
     </div>
-  </ng-template>
-</p-toast>
+    <div class="workflow-actions">
+      <button class="button small primary" (click)="executeWorkflow()" *ngIf="workflow.status !== 'in_progress'">
+        <i class="pi pi-play-circle"></i>
+        Start
+      </button>
+      <button class="button small secondary" (click)="openWorkflowProgress()" *ngIf="workflow.status === 'in_progress' else done">
+        <i class="pi pi-chart-line"></i>
+        Progress
+      </button>
+      <ng-template #done>
+        <button class="button small secondary" (click)="openWorkflowProgress()">
+          <i class="pi pi-chart-bar"></i>
+          Results
+        </button>
+      </ng-template>
+
+      <div class="actions-menu-container">
+        <button class="menu-button" (click)="toggleMenu($event)">
+          <i class="pi pi-ellipsis-h"></i>
+        </button>
+
+        <div class="dropdown-menu" [class.show]="menuOpen">
+          <button class="dropdown-item text-info" (click)="editWorkflow()">
+            <i class="pi pi-pencil"></i>
+            Edit
+          </button>
+          <div class="menu-divider"></div>
+          <button class="dropdown-item" (click)="shareWorkflow()">
+            <i class="pi pi-share-alt"></i>
+            Share
+          </button>
+          <div class="menu-divider"></div>
+          <button class="dropdown-item danger" (click)="deleteWorkflow()">
+            <i class="pi pi-trash"></i>
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<app-share-popup></app-share-popup>

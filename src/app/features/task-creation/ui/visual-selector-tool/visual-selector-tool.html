@@ -99,8 +99,8 @@
                 <input [(ngModel)]="step.action.url" class="form-control" placeholder="https://example.com">
               </div>
               <div *ngIf="requiresSelector(step.action.action_name)" class="form-group">
-                <div class="form-check form-group" *ngIf="step.action.useChildIterableSelector !== undefined ">
-                  <input class="form-check-input" type="checkbox" [(ngModel)]="step.action.useChildIterableSelector" id="flexCheckDefault">
+                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined ">
+                  <input class="form-check-input" type="checkbox" (change)="onUseChildIterableSelectorChange(step, $event)" id="flexCheckDefault">
                   <label class="form-check-label" for="flexCheckDefault">
                     use Child Iterable Selector
                   </label>
@@ -108,7 +108,7 @@
                 <label class="form-label">
                   <span class="material-icons">find_in_page</span> Selector
                 </label>
-                <select [(ngModel)]="step.action.selector" class="form-control" [disabled]="domElements.length === 0 || step.action.useChildIterableSelector === true">
+                <select [(ngModel)]="step.action.selector" class="form-control" [disabled]="domElements.length === 0 || step.useChildIterableSelector === true">
                   <option [value]="null" disabled selected>Select a selector</option>
                   <option *ngFor="let element of domElements" [value]="element.id">
                     {{ element.tag_name }} - {{ element.attributes | json }}
@@ -163,6 +163,12 @@
                 </app-custom-select>
               </div>
               <div class="form-group">
+                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined ">
+                  <input class="form-check-input" type="checkbox" (change)="onUseChildIterableSelectorChange(step, $event)" id="flexCheckDefault">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    use Child Iterable Selector
+                  </label>
+                </div>
                 <label class="form-label">
                   <span class="material-icons">find_in_page</span> Selector
                 </label>
@@ -240,6 +246,12 @@
                 </app-custom-select>
               </div>
               <div *ngIf="step.loop.loop_type === 'until_condition'" class="form-group">
+                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined ">
+                  <input class="form-check-input" type="checkbox" (change)="onUseChildIterableSelectorChange(step, $event)" id="flexCheckDefault">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    use Child Iterable Selector
+                  </label>
+                </div>
                 <label class="form-label">
                   <span class="material-icons">find_in_page</span> Stop Condition Selector
                 </label>
@@ -279,6 +291,12 @@
                 <input [(ngModel)]="step.loop.condition_attribute_value" class="form-control" placeholder="Expected value">
               </div>
               <div *ngIf="step.loop.loop_type === 'iterate_over_elements'" class="form-group">
+                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined ">
+                  <input class="form-check-input" type="checkbox" (change)="onUseChildIterableSelectorChange(step, $event)" id="flexCheckDefault">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    use Child Iterable Selector
+                  </label>
+                </div>
                 <label class="form-label">
                   <span class="material-icons">list</span> Parent Iterable Element Selector
                 </label>

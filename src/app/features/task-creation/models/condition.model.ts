@@ -10,5 +10,4 @@ export interface Condition {
 
   if_true_child_steps?: Step[] | null;
   if_false_child_steps?: Step[] | null;
-  useChildIterableSelector?: boolean;
 }

@@ -1,27 +1,40 @@
-<!-- src/app/components/header/header.component.html -->
 <header class="app-header">
   <div class="header-content">
     <div class="logo-section">
       <a routerLink="/" class="app-title">Any Scraper</a>
     </div>
+
     <button class="menu-toggle" (click)="toggleMenu()" *ngIf="isMobile" [attr.aria-expanded]="isMenuOpen">
-      <span class="menu-icon"></span>
+      <i class="pi pi-bars"></i>
     </button>
+
     <nav class="nav-links" [class.mobile-menu]="isMobile" [@menuAnimation]="isMenuOpen ? 'open' : 'closed'">
       <ng-container *ngIf="isLoggedIn$ | async as isLoggedIn">
-        <a routerLink="/" class="nav-button" (click)="isMenuOpen = false">Dashboard</a>
-        <button class="nav-button" (click)="authService.logout(); isMenuOpen = false">Logout</button>
+        <a routerLink="/" class="nav-button" (click)="isMenuOpen = false">
+          <i class="pi pi-home"></i> Dashboard
+        </a>
         <div class="profile-dropdown">
-          <button class="profile-button" (click)="toggleProfile()">Profile</button>
-          <div class="dropdown-menu" *ngIf="isProfileOpen"> <!-- Use isProfileOpen -->
-            <a routerLink="/profile" class="dropdown-item">View Profile</a>
-            <a routerLink="/settings" class="dropdown-item">Settings</a>
+          <button class="profile-button" (click)="toggleAccessWorkflow()">
+            <i class="pi pi-user"></i> Access Workflow
+          </button>
+          <div class="dropdown-menu" *ngIf="isAccessSharedWorkflowOpen">
+            <input [(ngModel)]="input_token" class="input-token" placeholder="Access token" />
+            <button class="access-button" (click)="accessSharedWorkflow()">Access</button>
           </div>
         </div>
+        <button class="nav-button" (click)="authService.logout(); isMenuOpen = false">
+          <i class="pi pi-sign-out"></i> Logout
+        </button>
+
       </ng-container>
+
       <ng-container *ngIf="!(isLoggedIn$ | async)">
-        <a routerLink="/auth/login" class="nav-button" (click)="isMenuOpen = false">Login</a>
-        <a routerLink="/auth/register" class="nav-button" (click)="isMenuOpen = false">Register</a>
+        <a routerLink="/auth/login" class="nav-button" (click)="isMenuOpen = false">
+          <i class="pi pi-sign-in"></i> Login
+        </a>
+        <a routerLink="/auth/register" class="nav-button" (click)="isMenuOpen = false">
+          <i class="pi pi-user-plus"></i> Register
+        </a>
       </ng-container>
     </nav>
   </div>

@@ -10,5 +10,4 @@ export interface Action {
   expected_value?: string;
   url?: string;
   result?: any;
-  useChildIterableSelector?: boolean;
 }

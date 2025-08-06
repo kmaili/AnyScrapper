@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Workflow } from '../../../task-creation/models/workflow.model';
 import { WorkflowService } from '../../../task-creation/data-access/workflow/workflow.service';
@@ -8,20 +8,37 @@ import { ToastModule } from 'primeng/toast';
 import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
 import { AvatarGroupModule } from 'primeng/avatargroup';
+import { SharePopup } from '../share-popup/share-popup';
 
 @Component({
   selector: 'app-workflow-card',
   standalone: true,
-  imports: [CommonModule, ToastModule, ButtonModule, AvatarGroupModule, AvatarModule],
+  imports: [CommonModule, ToastModule, ButtonModule, AvatarGroupModule, AvatarModule, SharePopup],
   templateUrl: './workflow-card.html',
   styleUrls: ['./workflow-card.css']
 })
 export class WorkflowCardComponent {
   @Input() workflow!: Workflow;
-
   @Output() workflowDeleted = new EventEmitter<Workflow>();
 
+  menuOpen: boolean = false;
+
+  sharingToken!: string;
+
   constructor(private workflowService: WorkflowService, private router: Router, private messageService: MessageService) {}
+
+  toggleMenu(event: Event) {
+    event.stopPropagation();
+    this.menuOpen = !this.menuOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    const targetElement = event.target as HTMLElement;
+    if (!targetElement.closest('.actions-menu-container')) {
+      this.menuOpen = false;
+    }
+  }
 
   executeWorkflow(){
     this.workflowService.execute_workflow(this.workflow).subscribe({
@@ -36,41 +53,39 @@ export class WorkflowCardComponent {
     });
   }
 
-  deleteWorkflow() {
-    this.messageService.add({
-      key: 'deleteWorkflow',
-      severity: 'warn',
-      summary: 'Delete Workflow',
-      detail: `Are you sure you want to delete the workflow "${this.workflow.name}"?`,
-      sticky: true,
-      closable: true,
+  shareWorkflow() {
+    this.workflowService.shareWorkflow(this.workflow.id!).subscribe({
+      next: (response: any)=> {
+        this.sharingToken = response.token;
+      }
     })
   }
-  onDeleteConfirm(message: any) {
+  deleteWorkflow() {
+    const deleteConfirmed = window.confirm('Do you want to delete this workflow?');
+    if (deleteConfirmed){
+      this.onDeleteConfirm();
+    }
+  }
+  
+  onDeleteConfirm() {
     this.workflowService.deleteWorkflow(this.workflow.id!).subscribe({
       next: () => {
         this.workflowDeleted.emit(this.workflow);
-        console.log('Workflow deleted successfully');
+        this.messageService.add({ severity: 'success', summary: 'Workflow Deleted', detail: `Workflow "${this.workflow.name}" has been deleted successfully.` });
       },
       error: (error) => {
-        console.error('Error deleting workflow:', error);
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: `Error deleting workflow: ${error}` });
       }
     });
-    this.messageService.clear('deleteWorkflow');
   }
-
-  onDeleteRefuse(message: any) {
-
-    this.messageService.clear('deleteWorkflow');
-  }
-
 
   openWorkflowProgress() {
-    console.log('Editing workflow:', this.workflow);
+    this.menuOpen = false;
     this.router.navigate(['/workflow', this.workflow.id]);
   }
+
   editWorkflow() {
-    console.log('Editing workflow:', this.workflow);
+    this.menuOpen = false;
     this.router.navigate(['/task-creation/edit', this.workflow.id]);
   }
 }

@@ -1,17 +1,51 @@
-<div class="workflow-list">
-  <div class="workflow-header">
-    <h2>Your Workflows</h2>
-    <a routerLink="/task-creation/new" class="btn btn-primary d-flex align-items-center gap-1"> <i class="pi pi-plus"></i>New</a>
+<div class="workflow-container">
+  <!-- Your Workflows -->
+  <div class="workflow-list">
+    <div class="workflow-header">
+      <h2>Your Workflows</h2>
+      <a routerLink="/task-creation/new" class="new-btn">
+        <i class="pi pi-plus"></i>
+        New
+      </a>
+    </div>
+
+    <ng-container *ngIf="loaded">
+      <div *ngIf="workflow_list.length === 0" class="empty-state">
+        <p>No workflows yet.<br />Create your first scraping workflow!</p>
+        <a routerLink="/task-creation/new" class="primary-action">Create Workflow</a>
+      </div>
+
+      <div class="workflow-grid" *ngIf="workflow_list.length > 0">
+        <app-workflow-card
+          *ngFor="let workflow of workflow_list"
+          [workflow]="workflow"
+          (workflowDeleted)="onWorkflowDeleted($event)">
+        </app-workflow-card>
+      </div>
+    </ng-container>
   </div>
 
-  <ng-container *ngIf="loaded">
-    <div *ngIf="workflow_list.length === 0" class="empty-state">
-      <p>No workflows yet.<br>Create your first scraping workflow!</p>
-      <a routerLink="/task-creation/new" class="button primary large">Create Workflow</a>
+  <!-- Divider -->
+  <div class="workflow-divider"></div>
+
+  <!-- Shared Workflows -->
+  <div class="workflow-list">
+    <div class="workflow-header">
+      <h2>Workflows Shared With You</h2>
     </div>
 
-    <div class="workflow-grid" *ngIf="workflow_list.length > 0">
-      <app-workflow-card *ngFor="let workflow of workflow_list" [workflow]="workflow" (workflowDeleted)="onWorkflowDeleted($event)"></app-workflow-card>
-    </div>
-  </ng-container>
+    <ng-container *ngIf="loaded">
+      <div *ngIf="shared_with_workflow_list.length === 0" class="empty-state">
+        <p>No workflows yet.<br />Create your first scraping workflow!</p>
+      </div>
+
+      <div class="workflow-grid" *ngIf="shared_with_workflow_list.length > 0">
+        <app-workflow-card
+          *ngFor="let workflow of shared_with_workflow_list"
+          [workflow]="workflow"
+          (workflowDeleted)="onWorkflowDeleted($event)">
+        </app-workflow-card>
+      </div>
+    </ng-container>
+  </div>
 </div>
