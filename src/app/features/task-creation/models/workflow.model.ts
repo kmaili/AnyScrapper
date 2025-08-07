@@ -7,5 +7,5 @@ export interface Workflow {
   startUrl: string;
   steps: Step[];
   status?: 'completed' | 'in_progress' | 'draft' | 'failed';
-  results?: any[];
+  results?: number[];
 }

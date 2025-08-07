@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, HostListener } from '@angular/core';
+import { Component, EventEmitter, Input, Output, HostListener, ViewChild, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Workflow } from '../../../task-creation/models/workflow.model';
 import { WorkflowService } from '../../../task-creation/data-access/workflow/workflow.service';
@@ -17,15 +17,24 @@ import { SharePopup } from '../share-popup/share-popup';
   templateUrl: './workflow-card.html',
   styleUrls: ['./workflow-card.css']
 })
-export class WorkflowCardComponent {
+export class WorkflowCardComponent implements OnInit {
   @Input() workflow!: Workflow;
   @Output() workflowDeleted = new EventEmitter<Workflow>();
+
+  @ViewChild(SharePopup) sharePopup!: SharePopup;
 
   menuOpen: boolean = false;
 
   sharingToken!: string;
 
+  permissionsLevel: number = 0;
+
   constructor(private workflowService: WorkflowService, private router: Router, private messageService: MessageService) {}
+  ngOnInit(): void {
+    if (this.workflow) {
+      this.getPermissionLevel();
+    }
+  }
 
   toggleMenu(event: Event) {
     event.stopPropagation();
@@ -53,13 +62,6 @@ export class WorkflowCardComponent {
     });
   }
 
-  shareWorkflow() {
-    this.workflowService.shareWorkflow(this.workflow.id!).subscribe({
-      next: (response: any)=> {
-        this.sharingToken = response.token;
-      }
-    })
-  }
   deleteWorkflow() {
     const deleteConfirmed = window.confirm('Do you want to delete this workflow?');
     if (deleteConfirmed){
@@ -87,5 +89,21 @@ export class WorkflowCardComponent {
   editWorkflow() {
     this.menuOpen = false;
     this.router.navigate(['/task-creation/edit', this.workflow.id]);
+  }
+
+  openSharePopup() {
+    this.menuOpen = false;
+    this.sharePopup.openModal();
+  }
+
+  getPermissionLevel() {
+    this.workflowService.getWorkflowPermissionLevel(this.workflow.id!).subscribe({
+      next: (response: any) => {
+        this.permissionsLevel = response.permissions_level;
+      },
+      error: (error) => {
+        console.error('Error fetching sharing token:', error);
+      }
+    });
   }
 }

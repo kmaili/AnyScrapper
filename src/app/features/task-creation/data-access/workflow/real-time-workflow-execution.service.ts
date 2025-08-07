@@ -11,7 +11,7 @@ export class RealTimeWorkflowExecutionService {
 
 
 
-    setupWebSocket(url: string = 'ws://localhost:8000/ws/workflow_execution/', workflowId: number) {
+    setupWebSocket(url: string = 'ws://127.0.0.1:8000/ws/workflow_execution/', workflowId: number) {
         this.socket = new WebSocket(url + workflowId + '/');
 
         this.socket.onopen = () => {

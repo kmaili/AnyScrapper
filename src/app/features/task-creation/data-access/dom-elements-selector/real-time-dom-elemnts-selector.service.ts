@@ -13,7 +13,7 @@ export class DomElementsSelectorWsService {
 
   constructor(private http: HttpClient) {}
 
-  connect(url: string, apiUrl: string = 'http://localhost:8000/api/dom-elements/') {
+  connect(url: string, apiUrl: string = 'http://127.0.0.1:8000/api/dom-elements/') {
     // Fetch initial DOM elements from HTTP API
     this.http.get<DomElement[]>(apiUrl).subscribe({
       next: (response) => {

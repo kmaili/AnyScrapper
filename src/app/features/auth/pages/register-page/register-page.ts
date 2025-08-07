@@ -29,7 +29,7 @@ export class RegisterPageComponent {
   onGoogleLogin() {
     // Replace with actual Google OAuth URL and client ID
     const clientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-    const redirectUri = 'http://localhost:4200/auth/callback'; // Update with your redirect URI
+    const redirectUri = 'http://127.0.0.1:4200/auth/callback'; // Update with your redirect URI
     const scope = 'email profile';
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&prompt=consent`;
     

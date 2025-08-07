@@ -22,11 +22,15 @@
               }
             ],
           "styles": [
+            "node_modules/bootstrap/dist/css/bootstrap.min.css",
             "node_modules/primeicons/primeicons.css",
             "src/styles.css"
           ],
 
-            "scripts": []
+            "scripts": [],
+            "polyfills": [
+              "@angular/localize/init"
+            ]
           },
           "configurations": {
             "production": {
@@ -79,6 +83,9 @@
             ],
             "styles": [
               "src/styles.css"
+            ],
+            "polyfills": [
+              "@angular/localize/init"
             ]
           }
         }

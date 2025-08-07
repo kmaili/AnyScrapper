@@ -120,7 +120,7 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
 
     this.steps.forEach((_, i) => this.isExpanded[i] = true);
 
-    this.wsService.connect('ws://localhost:8000/ws/dom-elements/', 'http://localhost:8000/api/dom-elements/');
+    this.wsService.connect('ws://127.0.0.1:8000/ws/dom-elements/', 'http://127.0.0.1:8000/api/dom-elements/');
 
     this.wsSubscription = this.wsService.domElements$.subscribe(elements => {
       this.domElements = elements;

@@ -1,0 +1,28 @@
+<div class="results-container">
+  <div class="timeline-wrapper">
+    <div class="timeline" role="region" aria-label="Workflow Results Timeline">
+      <div *ngFor="let result of results; let i = index" class="timeline-item" (click)="selectResult(i)" [class.active]="selectedIndex === i" role="button" tabindex="0" [attr.aria-label]="'Result ' + (i + 1) + ' at ' + result.timestamp">
+        <div class="item-dot"></div>
+        <div class="item-content">
+          <span class="item-time">{{ result.created_at | date:'short' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="results-panel" *ngIf="selectedResult">
+    <h2 class="panel-title">Result Details</h2>
+    <div class="json-viewer" role="region" aria-live="polite">
+      <pre>{{ selectedResult | json }}</pre>
+    </div>
+  </div>
+  <div class="no-selection" *ngIf="!selectedResult">
+    <p class="no-selection-text">Click a timeline item to view its results.</p>
+  </div>
+  <button 
+        class="export-data-btn" 
+        (click)="exportToJson(selectedResult)">
+        <span class="material-icons">file_download</span>
+        Export Data
+      </button>
+</div>

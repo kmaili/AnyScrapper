@@ -36,17 +36,17 @@
         </button>
 
         <div class="dropdown-menu" [class.show]="menuOpen">
-          <button class="dropdown-item text-info" (click)="editWorkflow()">
+          <button class="dropdown-item text-info" (click)="editWorkflow()" [disabled]="permissionsLevel < 1">
             <i class="pi pi-pencil"></i>
             Edit
           </button>
           <div class="menu-divider"></div>
-          <button class="dropdown-item" (click)="shareWorkflow()">
+          <button class="dropdown-item" (click)="openSharePopup()" [disabled]="permissionsLevel < 3">
             <i class="pi pi-share-alt"></i>
             Share
           </button>
           <div class="menu-divider"></div>
-          <button class="dropdown-item danger" (click)="deleteWorkflow()">
+          <button class="dropdown-item danger" (click)="deleteWorkflow()" [disabled]="permissionsLevel < 2">
             <i class="pi pi-trash"></i>
             Delete
           </button>
@@ -55,4 +55,4 @@
     </div>
   </div>
 </div>
-<app-share-popup></app-share-popup>
+<app-share-popup [workflowId]="workflow.id!"></app-share-popup>

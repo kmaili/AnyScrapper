@@ -9,21 +9,15 @@
   <div class="content">
     <app-workflow-process-viewer [steps]="workflow.steps" class="process-viewer"></app-workflow-process-viewer>
     
-    <div class="workflow-results" *ngIf="workflow.status === 'completed'" #workflowResults>
+    <div class="workflow-results" #workflowResults>
       <h3>Workflow Results</h3>
       <div class="results-container">
-        <ngx-json-viewer [json]="workflow.results"></ngx-json-viewer>
+        <app-workflow-results [workflowId]="workflow.id!">
+        </app-workflow-results>
       </div>
     </div>
 
     <div class="button-group">
-      <button 
-        *ngIf="workflow.status === 'completed'" 
-        class="export-data-btn" 
-        (click)="exportToJson()">
-        <span class="material-icons">file_download</span>
-        Export Data
-      </button>
       <button 
         *ngIf="workflow.status === 'completed' || workflow.status === 'failed'" 
         class="restart-workflow-btn" 

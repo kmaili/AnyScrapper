@@ -9,9 +9,10 @@ import { updateStepStatus } from '../../../task-creation/utils/workflow.utils';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { MessageService } from 'primeng/api';
 import { Step } from '../../../task-creation/models/step.model';
+import { WorkflowResultsComponent } from '../../ui/workflow-results/workflow-results';
 @Component({
   selector: 'app-workflow-execution-page',
-  imports: [CommonModule ,WorkflowProcessComponent, DatePipe, NgxJsonViewerModule],
+  imports: [CommonModule ,WorkflowProcessComponent, DatePipe, NgxJsonViewerModule, WorkflowResultsComponent],
   templateUrl: './workflow-execution-page.html',
   styleUrl: './workflow-execution-page.css'
 })
@@ -48,7 +49,7 @@ export class WorkflowExecutionPage implements OnInit {
     }
   }
   startFetchingWorkflowExecution() {
-    this.workflowExecutionService.setupWebSocket('ws://localhost:8000/ws/workflow_execution/', this.workflow.id!);
+    this.workflowExecutionService.setupWebSocket('ws://127.0.0.1:8000/ws/workflow_execution/', this.workflow.id!);
     this.workflowExecutionService.workflowExecution$.subscribe({
       next: (workflowExecution) => {
         console.log('Workflow execution updated:', workflowExecution);
@@ -67,21 +68,6 @@ export class WorkflowExecutionPage implements OnInit {
     })
   }
   
-  exportToJson() {
-    try {
-      const jsonString = JSON.stringify(this.workflow.results!, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'workflow-results.json';
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error exporting JSON:', error);
-      alert('Failed to export JSON. Check console for details.');
-    }
-  }
   restartWorkflow() {
     this.workflow.results = [];
     this.workflowService.execute_workflow(this.workflow).subscribe({

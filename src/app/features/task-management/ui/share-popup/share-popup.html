@@ -1,9 +1,31 @@
-<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#dd">Small modal</button>
+<ng-template #modal let-modal>
+  <div class="modal-wrapper">
+    <div class="modal-container">
+      <h2 class="modal-title">Permissions</h2>
 
-<div id="dd" class="modal fade bd-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-sm">
-    <div class="modal-content">
-      ...
+      <div class="checkbox-group">
+        <label class="checkbox-item">
+          <input type="checkbox" [(ngModel)]="permissions.execute" />
+          <span>Execute</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" [(ngModel)]="permissions.edit" />
+          <span>Edit</span>
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" [(ngModel)]="permissions.delete" />
+          <span>Delete</span>
+        </label>
+      </div>
+
+      <button class="generate-btn" (click)="generateToken()">Generate Token</button>
+
+      <div class="token-display" *ngIf="token">
+        <span>{{ token }}</span>
+        <button class="copy-btn" (click)="copyToken()">Copy</button>
+      </div>
+
+      <button class="close-btn" (click)="modal.close()">Close</button>
     </div>
   </div>
-</div>
+</ng-template>
