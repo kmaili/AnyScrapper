@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { interval, Subscription } from 'rxjs';
@@ -20,11 +20,18 @@ import { MessageService } from 'primeng/api';
   styleUrls: ['./visual-selector-tool.css']
 })
 export class VisualSelectorToolComponent implements OnInit, OnDestroy {
+
+  @HostListener('window:beforeunload', ['$event'])
+  unloadNotification($event: BeforeUnloadEvent): void {
+    $event.preventDefault();
+  }
+
   @Input() steps: Step[] = [];
   @Input() initialized_workflow: Workflow = {
     name: '',
     startUrl: '',
-    steps: []
+    steps: [],
+    isScheduled: false
   };
   @Output() stepsChange = new EventEmitter<Step[]>();
   @Output() workflow = new EventEmitter<Workflow>();
@@ -38,6 +45,8 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
   private wsSubscription!: Subscription;
 
   isExpanded: { [key: number]: boolean } = {};
+
+  validationErrors: string[] = [];
 
   ACTION_TYPE_CHOICES: SelectOption[] = [
     { value: 'data_collection', label: 'Data Collection', icon: 'data_exploration' },
@@ -92,11 +101,11 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
 
   constructor(
     private wsService: DomElementsSelectorWsService,
+    private messageService: MessageService
   ) {}
 
   ngOnInit() {
-    const useChildIterableSelector = (this.parentStep && this.parentStep.loop
-    && this.parentStep.loop.loop_type === 'iterate_over_elements') ? true : undefined;
+    const useChildIterableSelector = (this.parentStep && this.parentStep.loop && this.parentStep.loop.loop_type === 'iterate_over_elements') ? true : undefined;
     
     if (!this.steps || this.steps.length === 0) {
       this.steps = [
@@ -105,8 +114,7 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
           step_type: 'action',
           order: 1,
           workflow: 1,
-
-            useChildIterableSelector: useChildIterableSelector,
+          useChildIterableSelector: useChildIterableSelector,
           action: {
             step: 1,
             action_type: 'data_collection',
@@ -137,128 +145,126 @@ export class VisualSelectorToolComponent implements OnInit, OnDestroy {
     return element.id;
   }
 
-addStep(type: 'action' | 'condition' | 'loop') {
-  const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
-  const useChildIterableSelector = (this.parentStep && this.parentStep.loop
-    && this.parentStep.loop.loop_type === 'iterate_over_elements') ? true : undefined;
-  let newStep: Step;
+  addStep(type: 'action' | 'condition' | 'loop') {
+    const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
+    const useChildIterableSelector = (this.parentStep && this.parentStep.loop && this.parentStep.loop.loop_type === 'iterate_over_elements') ? true : undefined;
+    let newStep: Step;
 
-  if (type === 'action') {
-    newStep = {
-      id: newId,
-      step_type: 'action',
-      order: this.steps.length + 1,
-      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
-
+    if (type === 'action') {
+      newStep = {
+        id: newId,
+        step_type: 'action',
+        order: this.steps.length + 1,
+        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
         useChildIterableSelector: useChildIterableSelector,
-      action: {
-        step: newId,
-        action_type: 'data_collection',
-        action_name: 'element_text',
-        fallback_selector: undefined,
-      }
-    };
-  } else if (type === 'condition') {
-    newStep = {
-      id: newId,
-      step_type: 'condition',
-      order: this.steps.length + 1,
-      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+        action: {
+          step: newId,
+          action_type: 'data_collection',
+          action_name: 'element_text',
+          fallback_selector: undefined,
+        }
+      };
+    } else if (type === 'condition') {
+      newStep = {
+        id: newId,
+        step_type: 'condition',
+        order: this.steps.length + 1,
+        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
         useChildIterableSelector: useChildIterableSelector,
-      condition: {
-        step: newId,
-        condition_type: 'element_found',
-        selector: undefined,
-        fallback_selector: undefined,
-        if_true_child_steps: [],
-        if_false_child_steps: [],
-      }
-    };
-  } else {
-    newStep = {
-      id: newId,
-      step_type: 'loop',
-      order: this.steps.length + 1,
-      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
-      useChildIterableSelector: useChildIterableSelector,
-      loop: {
-        step: newId,
-        loop_type: 'fixed_iterations',
-        iterations_count: 1,
-        child_steps: [],
-        condition_element_selector: undefined,
-        fallback_selector: undefined,
-        parent_iterable_element_selector: undefined,
-        parent_iterable_element_selector_fallback: undefined,
-        child_iterable_element_selector: undefined,
-        child_iterable_element_selector_fallback: undefined
-      }
-    };
+        condition: {
+          step: newId,
+          condition_type: 'element_found',
+          selector: undefined,
+          fallback_selector: undefined,
+          if_true_child_steps: [],
+          if_false_child_steps: [],
+        }
+      };
+    } else {
+      newStep = {
+        id: newId,
+        step_type: 'loop',
+        order: this.steps.length + 1,
+        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+        useChildIterableSelector: useChildIterableSelector,
+        loop: {
+          step: newId,
+          loop_type: 'fixed_iterations',
+          iterations_count: 1,
+          child_steps: [],
+          condition_element_selector: undefined,
+          fallback_selector: undefined,
+          parent_iterable_element_selector: undefined,
+          parent_iterable_element_selector_fallback: undefined,
+          child_iterable_element_selector: undefined,
+          child_iterable_element_selector_fallback: undefined
+        }
+      };
+    }
+    this.steps.push(newStep);
+    this.isExpanded[this.steps.length - 1] = true;
+    this.reorderSteps();
+    this.emitChanges();
   }
-  this.steps.push(newStep);
-  this.isExpanded[this.steps.length - 1] = true;
-  this.reorderSteps();
-  this.emitChanges();
-}
 
-addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event) {
-  event.stopPropagation();
-  const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
-  let newStep: Step;
+  addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event) {
+    event.stopPropagation();
+    const newId = this.steps.length > 0 ? Math.max(...this.steps.map(s => s.id)) + 1 : 1;
+    let newStep: Step;
 
-  if (type === 'action') {
-    newStep = {
-      id: newId,
-      step_type: 'action',
-      order: this.steps[index].order,
-      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
-      action: {
-        step: newId,
-        action_type: 'data_collection',
-        action_name: 'element_text',
-        fallback_selector: undefined
-      }
-    };
-  } else if (type === 'condition') {
-    newStep = {
-      id: newId,
-      step_type: 'condition',
-      order: this.steps[index].order,
-      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
-      condition: {
-        step: newId,
-        condition_type: 'element_found',
-        selector: undefined,
-        fallback_selector: undefined,
-        if_true_child_steps: [],
-        if_false_child_steps: []
-      }
-    };
-  } else {
-    newStep = {
-      id: newId,
-      step_type: 'loop',
-      order: this.steps[index].order,
-      workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
-      loop: {
-        step: newId,
-        loop_type: 'fixed_iterations',
-        iterations_count: 1,
-        child_steps: [],
-        condition_element_selector: undefined,
-        fallback_selector: undefined,
-        parent_iterable_element_selector: undefined,
-        parent_iterable_element_selector_fallback: undefined,
-        child_iterable_element_selector: undefined,
-        child_iterable_element_selector_fallback: undefined
-      }
-    };
+    if (type === 'action') {
+      newStep = {
+        id: newId,
+        step_type: 'action',
+        order: this.steps[index].order,
+        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+        action: {
+          step: newId,
+          action_type: 'data_collection',
+          action_name: 'element_text',
+          fallback_selector: undefined
+        }
+      };
+    } else if (type === 'condition') {
+      newStep = {
+        id: newId,
+        step_type: 'condition',
+        order: this.steps[index].order,
+        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+        condition: {
+          step: newId,
+          condition_type: 'element_found',
+          selector: undefined,
+          fallback_selector: undefined,
+          if_true_child_steps: [],
+          if_false_child_steps: []
+        }
+      };
+    } else {
+      newStep = {
+        id: newId,
+        step_type: 'loop',
+        order: this.steps[index].order,
+        workflow: this.initialized_workflow.steps.length > 0 ? this.initialized_workflow.steps[0].workflow : 1,
+        loop: {
+          step: newId,
+          loop_type: 'fixed_iterations',
+          iterations_count: 1,
+          child_steps: [],
+          condition_element_selector: undefined,
+          fallback_selector: undefined,
+          parent_iterable_element_selector: undefined,
+          parent_iterable_element_selector_fallback: undefined,
+          child_iterable_element_selector: undefined,
+          child_iterable_element_selector_fallback: undefined
+        }
+      };
+    }
+    this.steps.splice(index, 0, newStep);
+    this.isExpanded[index] = true;
+    this.reorderSteps();
+    this.emitChanges();
   }
-  this.steps.splice(index, 0, newStep);
-  this.isExpanded[index] = true;
-  this.reorderSteps();
-  this.emitChanges();
-}
 
   duplicateStep(index: number, event: Event) {
     event.stopPropagation();
@@ -338,13 +344,11 @@ addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event
     this.emitChanges();
   }
 
-
   updateStepType(index: number, stepType: 'action' | 'condition' | 'loop') {
     const originalStep = this.steps[index];
     const newId = originalStep.id;
     let newStep: Step;
-    const useChildIterableSelector = (this.parentStep && this.parentStep.loop
-    && this.parentStep.loop.loop_type === 'iterate_over_elements') ? true : undefined;
+    const useChildIterableSelector = (this.parentStep && this.parentStep.loop && this.parentStep.loop.loop_type === 'iterate_over_elements') ? true : undefined;
     if (stepType === 'action') {
       newStep = {
         id: newId,
@@ -364,7 +368,7 @@ addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event
         step_type: 'condition',
         order: originalStep.order,
         workflow: originalStep.workflow,
-          useChildIterableSelector: useChildIterableSelector,
+        useChildIterableSelector: useChildIterableSelector,
         condition: {
           step: newId,
           condition_type: 'element_found',
@@ -379,8 +383,7 @@ addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event
         step_type: 'loop',
         order: originalStep.order,
         workflow: originalStep.workflow,
-
-          useChildIterableSelector: useChildIterableSelector,
+        useChildIterableSelector: useChildIterableSelector,
         loop: {
           step: newId,
           loop_type: 'fixed_iterations',
@@ -400,7 +403,6 @@ addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event
     const oldType = step.action.action_type;
     step.action.action_type = actionType as 'interaction' | 'data_collection';
 
-    
     if (actionType === 'interaction') {
       step.action.action_name = 'page_scroll_down';
       step.action.selector = undefined;
@@ -462,46 +464,43 @@ addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event
   }
 
   updateLoopType(index: number, loopType: 'fixed_iterations' | 'until_condition' | 'iterate_over_elements') {
-  const step = this.steps[index];
-  if (step.step_type !== 'loop' || !step.loop) return;
-  step.loop.loop_type = loopType;
+    const step = this.steps[index];
+    if (step.step_type !== 'loop' || !step.loop) return;
+    step.loop.loop_type = loopType;
 
-
-  if (loopType === 'fixed_iterations') {
-    delete step.loop.condition_type;
-    delete step.loop.condition_element_selector;
-    delete step.loop.fallback_selector;
-    delete step.loop.condition_element_attribute;
-    delete step.loop.condition_attribute_value;
-    step.loop.iterations_count = step.loop.iterations_count || 1;
-    step.loop.child_steps?.forEach(step => { this.useChildIterableSelectorInStep(step, undefined) })
-  } else if (loopType === 'until_condition') {
-    delete step.loop.iterations_count;
-    step.loop.condition_element_selector = step.loop.condition_element_selector || undefined;
-    step.loop.fallback_selector = step.loop.fallback_selector || undefined;
-    step.loop.condition_type = step.loop.condition_type || 'element_found';
-    step.loop.child_steps?.forEach(step => { this.useChildIterableSelectorInStep(step, undefined) })
-
-  } else if (loopType === 'iterate_over_elements') {
-    delete step.loop.iterations_count;
-    delete step.loop.condition_type;
-    delete step.loop.condition_element_selector;
-    delete step.loop.fallback_selector;
-    delete step.loop.condition_element_attribute;
-    delete step.loop.condition_attribute_value;
-    step.loop.parent_iterable_element_selector = step.loop.parent_iterable_element_selector || undefined;
-    step.loop.parent_iterable_element_selector_fallback = step.loop.parent_iterable_element_selector_fallback || undefined;
-    step.loop.child_iterable_element_selector = step.loop.child_iterable_element_selector || undefined;
-    step.loop.child_iterable_element_selector_fallback = step.loop.child_iterable_element_selector_fallback || undefined;
-    step.loop.child_steps?.forEach(step => { this.useChildIterableSelectorInStep(step, false) })
+    if (loopType === 'fixed_iterations') {
+      delete step.loop.condition_type;
+      delete step.loop.condition_element_selector;
+      delete step.loop.fallback_selector;
+      delete step.loop.condition_element_attribute;
+      delete step.loop.condition_attribute_value;
+      step.loop.iterations_count = step.loop.iterations_count || 1;
+      step.loop.child_steps?.forEach(step => { this.useChildIterableSelectorInStep(step, undefined) })
+    } else if (loopType === 'until_condition') {
+      delete step.loop.iterations_count;
+      step.loop.condition_element_selector = step.loop.condition_element_selector || undefined;
+      step.loop.fallback_selector = step.loop.fallback_selector || undefined;
+      step.loop.condition_type = step.loop.condition_type || 'element_found';
+      step.loop.child_steps?.forEach(step => { this.useChildIterableSelectorInStep(step, undefined) })
+    } else if (loopType === 'iterate_over_elements') {
+      delete step.loop.iterations_count;
+      delete step.loop.condition_type;
+      delete step.loop.condition_element_selector;
+      delete step.loop.fallback_selector;
+      delete step.loop.condition_element_attribute;
+      delete step.loop.condition_attribute_value;
+      step.loop.parent_iterable_element_selector = step.loop.parent_iterable_element_selector || undefined;
+      step.loop.parent_iterable_element_selector_fallback = step.loop.parent_iterable_element_selector_fallback || undefined;
+      step.loop.child_iterable_element_selector = step.loop.child_iterable_element_selector || undefined;
+      step.loop.child_iterable_element_selector_fallback = step.loop.child_iterable_element_selector_fallback || undefined;
+      step.loop.child_steps?.forEach(step => { this.useChildIterableSelectorInStep(step, false) })
+    }
+    this.emitChanges();
   }
-  this.emitChanges();
-}
 
-  useChildIterableSelectorInStep(step: Step, isUsed: undefined | boolean){
+  useChildIterableSelectorInStep(step: Step, isUsed: undefined | boolean) {
     step.useChildIterableSelector = isUsed
   }
-
 
   onNestedStepsChange(parentStep: Step, branch: 'if_true_child_steps' | 'if_false_child_steps' | 'child_steps', updatedSteps: Step[]) {
     if (parentStep.step_type === 'condition' && parentStep.condition && (branch === 'if_true_child_steps' || branch === 'if_false_child_steps')) {
@@ -599,12 +598,117 @@ addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event
     }
   }
 
-  completeWorkflow() {
-    this.workflow.emit({
-      name: this.initialized_workflow.name,
-      startUrl: this.initialized_workflow.startUrl,
-      steps: this.steps
+
+  private validateWorkflow(workflow: Workflow, steps: Step[]): boolean {
+    this.validationErrors = [];
+
+    // Validate each step recursively
+    steps.forEach(step => {
+      if (!step.step_type) {
+        this.validationErrors.push(`Step ${step.id} is missing a step type.`);
+      }
+
+      if (step.step_type === 'action' && step.action) {
+        if (!step.action.action_type) {
+          this.validationErrors.push(`Step ${step.id} is missing an action type.`);
+        }
+        if (this.requiresSelector(step.action.action_name) && !step.action.selector && !step.useChildIterableSelector) {
+          this.validationErrors.push(`Step ${step.id} requires a selector for action ${step.action.action_name}.`);
+        }
+        if (step.action.action_name === 'page_navigate' && (!step.action.url || isValidUrl(step.action.url))) {
+          this.validationErrors.push(`Step ${step.id} requires a valid URL for page_navigate action.`);
+        }
+        if (step.action.action_name === 'element_input_text' && !step.action.expected_value) {
+          this.validationErrors.push(`Step ${step.id} requires an input value for element_input_text action.`);
+        }
+        if ((step.action.action_name === 'element_get_attribute_value' || step.action.action_name.includes('element_check_attribute')) && !step.action.attribute) {
+          this.validationErrors.push(`Step ${step.id} requires an attribute name for ${step.action.action_name} action.`);
+        }
+        if (step.action.action_name.includes('element_check_attribute_value_') && !step.action.expected_value) {
+          this.validationErrors.push(`Step ${step.id} requires an expected value for ${step.action.action_name} action.`);
+        }
+      }
+
+      if (step.step_type === 'condition' && step.condition) {
+        if (!step.condition.condition_type) {
+          this.validationErrors.push(`Step ${step.id} is missing a condition type.`);
+        }
+        if (step.condition.condition_type && !['element_found', 'element_not_found'].includes(step.condition.condition_type) && !step.condition.selector) {
+          this.validationErrors.push(`Step ${step.id} requires a selector for condition type ${step.condition.condition_type}.`);
+        }
+        if (step.condition.condition_type?.includes('attribute_') && !step.condition.attribute) {
+          this.validationErrors.push(`Step ${step.id} requires an attribute name for condition type ${step.condition.condition_type}.`);
+        }
+        if ((step.condition.condition_type?.includes('attribute_') || step.condition.condition_type === 'element_text_equals' || step.condition.condition_type === 'element_text_contains') && !step.condition.expected_value) {
+          this.validationErrors.push(`Step ${step.id} requires an expected value for condition type ${step.condition.condition_type}.`);
+        }
+        if (step.condition.if_true_child_steps) {
+          if (!this.validateWorkflow(workflow, step.condition.if_true_child_steps)) {
+            this.validationErrors.push(`Validation failed in if_true_child_steps of step ${step.id}.`);
+          }
+        }
+        if (step.condition.if_false_child_steps) {
+          if (!this.validateWorkflow(workflow, step.condition.if_false_child_steps)) {
+            this.validationErrors.push(`Validation failed in if_false_child_steps of step ${step.id}.`);
+          }
+        }
+      }
+
+      if (step.step_type === 'loop' && step.loop) {
+        if (!step.loop.loop_type) {
+          this.validationErrors.push(`Step ${step.id} is missing a loop type.`);
+        }
+        if (step.loop.loop_type === 'fixed_iterations' && (!step.loop.iterations_count || step.loop.iterations_count < 1)) {
+          this.validationErrors.push(`Step ${step.id} requires a positive iteration count for fixed_iterations.`);
+        }
+        if (step.loop.loop_type === 'until_condition') {
+          if (!step.loop.condition_type) {
+            this.validationErrors.push(`Step ${step.id} requires a condition type for until_condition loop.`);
+          }
+          if (step.loop.condition_type && !['element_found', 'element_not_found'].includes(step.loop.condition_type) && !step.loop.condition_element_selector) {
+            this.validationErrors.push(`Step ${step.id} requires a condition element selector for condition type ${step.loop.condition_type}.`);
+          }
+          if (step.loop.condition_type?.includes('attribute_') && !step.loop.condition_element_attribute) {
+            this.validationErrors.push(`Step ${step.id} requires an attribute name for condition type ${step.loop.condition_type}.`);
+          }
+          if (step.loop.condition_type?.includes('attribute_') && !step.loop.condition_attribute_value) {
+            this.validationErrors.push(`Step ${step.id} requires an attribute value for condition type ${step.loop.condition_type}.`);
+          }
+        }
+        if (step.loop.loop_type === 'iterate_over_elements') {
+          if (!step.loop.parent_iterable_element_selector) {
+            this.validationErrors.push(`Step ${step.id} requires a parent iterable element selector for iterate_over_elements.`);
+          }
+          if (!step.loop.child_iterable_element_selector) {
+            this.validationErrors.push(`Step ${step.id} requires a child iterable element selector for iterate_over_elements.`);
+          }
+        }
+        if (step.loop.child_steps) {
+          if (!this.validateWorkflow(workflow, step.loop.child_steps)) {
+            this.validationErrors.push(`Validation failed in child_steps of step ${step.id}.`);
+          }
+        }
+      }
     });
+
+    return this.validationErrors.length === 0;
+  }
+
+
+
+  completeWorkflow() {
+    this.validationErrors = [];
+    const isValid = this.validateWorkflow(this.initialized_workflow, this.steps);
+    if (isValid) {
+      this.workflow.emit({
+        name: this.initialized_workflow.name,
+        startUrl: this.initialized_workflow.startUrl,
+        steps: this.steps,
+        isScheduled: this.initialized_workflow.isScheduled,
+      });
+    } else {
+      this.messageService.add({ severity: 'error', summary: 'Validation Failed', detail: 'Please fix the errors before submitting.' });
+    }
   }
 
   private getActionType(actionName: string): 'interaction' | 'data_collection' {
@@ -641,7 +745,15 @@ addStepBefore(index: number, type: 'action' | 'condition' | 'loop', event: Event
     if (step.step_type === 'loop' && step.loop) {
       step.loop.condition_element_selector = undefined;
       step.loop.fallback_selector = undefined;
-
     }
+  }
+}
+
+export function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
   }
 }

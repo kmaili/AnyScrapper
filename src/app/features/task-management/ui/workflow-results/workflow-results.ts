@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WorkflowService } from '../../../task-creation/data-access/workflow/workflow.service';
+import * as yaml from 'js-yaml';
 
 @Component({
   selector: 'app-workflow-results',
@@ -52,6 +53,23 @@ export class WorkflowResultsComponent implements OnInit {
     } catch (error) {
       console.error('Error exporting JSON:', error);
       alert('Failed to export JSON. Check console for details.');
+    }
+  }
+
+  exportToYaml(selectedResult: any): void {
+    try {
+      const yamlString = yaml.dump(selectedResult);
+      const blob = new Blob([yamlString], { type: 'application/x-yaml' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workflow-results.yaml';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+    catch (error) {
+      console.error('Error exporting YAML:', error);
+      alert('Failed to export YAML. Check console for details.');
     }
   }
 }

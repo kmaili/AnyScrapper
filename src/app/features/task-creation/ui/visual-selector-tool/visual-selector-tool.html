@@ -99,7 +99,7 @@
                 <input [(ngModel)]="step.action.url" class="form-control" placeholder="https://example.com">
               </div>
               <div *ngIf="requiresSelector(step.action.action_name)" class="form-group">
-                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined ">
+                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined">
                   <input class="form-check-input" type="checkbox" (change)="onUseChildIterableSelectorChange(step, $event)" id="flexCheckDefault">
                   <label class="form-check-label" for="flexCheckDefault">
                     use Child Iterable Selector
@@ -116,6 +116,7 @@
                   <option *ngIf="domElements.length === 0" [value]="null" disabled>No elements available</option>
                 </select>
                 <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
+                <small *ngIf="step.action.selector === null && requiresSelector(step.action.action_name)" class="text-danger">Selector is required for this action.</small>
               </div>
               <div *ngIf="requiresSelector(step.action.action_name)" class="form-group">
                 <label class="form-label">
@@ -136,18 +137,21 @@
                   <span class="material-icons">description</span> Attribute Name
                 </label>
                 <input [(ngModel)]="step.action.attribute" class="form-control" placeholder="e.g., href, src, class, id">
+                <small *ngIf="step.action.action_name.includes('element_check_attribute') && !step.action.attribute" class="text-danger">Attribute is required for this action.</small>
               </div>
               <div *ngIf="step.action.action_type === 'data_collection' && (step.action.action_name === 'element_input_text')" class="form-group">
                 <label class="form-label">
                   <span class="material-icons">input</span> Input Value
                 </label>
                 <input [(ngModel)]="step.action.expected_value" class="form-control" placeholder="Text to input">
+                <small *ngIf="step.action.action_name === 'element_input_text' && !step.action.expected_value" class="text-danger">Input value is required for this action.</small>
               </div>
               <div *ngIf="step.action.action_type === 'data_collection' && step.action.action_name.includes('element_check_attribute_value_')" class="form-group">
                 <label class="form-label">
                   <span class="material-icons">compare_arrows</span> Expected Value
                 </label>
                 <input [(ngModel)]="step.action.expected_value" class="form-control" placeholder="Expected value to check">
+                <small *ngIf="step.action.action_name.includes('element_check_attribute_value_') && !step.action.expected_value" class="text-danger">Expected value is required for this action.</small>
               </div>
             </ng-container>
             <ng-container *ngIf="step.step_type === 'condition' && step.condition">
@@ -161,9 +165,10 @@
                   placeholder="Select Condition Type"
                   (valueChange)="step.condition.condition_type = $event; emitChanges()">
                 </app-custom-select>
+                <small *ngIf="!step.condition.condition_type" class="text-danger">Condition type is required.</small>
               </div>
               <div class="form-group">
-                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined ">
+                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined">
                   <input class="form-check-input" type="checkbox" (change)="onUseChildIterableSelectorChange(step, $event)" id="flexCheckDefault">
                   <label class="form-check-label" for="flexCheckDefault">
                     use Child Iterable Selector
@@ -180,6 +185,7 @@
                   <option *ngIf="domElements.length === 0" [value]="null" disabled>No elements available</option>
                 </select>
                 <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
+                <small *ngIf="step.condition.selector === null && step.condition.condition_type && !['element_found', 'element_not_found'].includes(step.condition.condition_type)" class="text-danger">Selector is required for this condition type.</small>
               </div>
               <div *ngIf="step.condition.selector" class="form-group">
                 <label class="form-label">
@@ -200,12 +206,14 @@
                   <span class="material-icons">description</span> Attribute Name
                 </label>
                 <input [(ngModel)]="step.condition.attribute" class="form-control" placeholder="class, id, data-*...">
+                <small *ngIf="step.condition.condition_type?.includes('attribute_') && !step.condition.attribute" class="text-danger">Attribute is required for this condition type.</small>
               </div>
               <div *ngIf="step.condition.condition_type?.includes('attribute_') || step.condition.condition_type === 'element_text_equals' || step.condition.condition_type === 'element_text_contains'" class="form-group">
                 <label class="form-label">
                   <span class="material-icons">compare_arrows</span> Expected Value
                 </label>
                 <input [(ngModel)]="step.condition.expected_value" class="form-control" placeholder="Expected value">
+                <small *ngIf="(step.condition.condition_type?.includes('attribute_') || step.condition.condition_type === 'element_text_equals' || step.condition.condition_type === 'element_text_contains') && !step.condition.expected_value" class="text-danger">Expected value is required for this condition type.</small>
               </div>
               <div class="nested-steps">
                 <div class="nested-title"><span class="material-icons">check_circle</span> If True</div>
@@ -227,12 +235,14 @@
                   placeholder="Select Loop Type"
                   (valueChange)="updateLoopType(i, $event)">
                 </app-custom-select>
+                <small *ngIf="!step.loop.loop_type" class="text-danger">Loop type is required.</small>
               </div>
               <div *ngIf="step.loop.loop_type === 'fixed_iterations'" class="form-group">
                 <label class="form-label">
                   <span class="material-icons">repeat</span> Iterations
                 </label>
                 <input [(ngModel)]="step.loop.iterations_count" type="number" min="1" class="form-control">
+                <small *ngIf="step.loop.loop_type === 'fixed_iterations' && (!step.loop.iterations_count || step.loop.iterations_count < 1)" class="text-danger">Iterations must be a positive number.</small>
               </div>
               <div *ngIf="step.loop.loop_type === 'until_condition'" class="form-group">
                 <label class="form-label">
@@ -244,9 +254,10 @@
                   placeholder="Select Condition Type"
                   (valueChange)="step.loop.condition_type = $event; emitChanges()">
                 </app-custom-select>
+                <small *ngIf="step.loop.loop_type === 'until_condition' && !step.loop.condition_type" class="text-danger">Stop condition type is required.</small>
               </div>
               <div *ngIf="step.loop.loop_type === 'until_condition'" class="form-group">
-                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined ">
+                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined">
                   <input class="form-check-input" type="checkbox" (change)="onUseChildIterableSelectorChange(step, $event)" id="flexCheckDefault">
                   <label class="form-check-label" for="flexCheckDefault">
                     use Child Iterable Selector
@@ -263,6 +274,7 @@
                   <option *ngIf="domElements.length === 0" [value]="null" disabled>No elements available</option>
                 </select>
                 <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
+                <small *ngIf="step.loop.loop_type === 'until_condition' && step.loop.condition_element_selector === null && step.loop.condition_type && !['element_found', 'element_not_found'].includes(step.loop.condition_type)" class="text-danger">Selector is required for this condition type.</small>
               </div>
               <div *ngIf="step.loop.condition_element_selector" class="form-group">
                 <label class="form-label">
@@ -283,15 +295,17 @@
                   <span class="material-icons">description</span> Stop Condition Attribute Name
                 </label>
                 <input [(ngModel)]="step.loop.condition_element_attribute" class="form-control" placeholder="class, id, data-*...">
+                <small *ngIf="step.loop.condition_type?.includes('attribute_') && !step.loop.condition_element_attribute" class="text-danger">Attribute is required for this condition type.</small>
               </div>
               <div *ngIf="step.loop.loop_type === 'until_condition' && step.loop.condition_type?.includes('attribute_')" class="form-group">
                 <label class="form-label">
                   <span class="material-icons">compare_arrows</span> Stop Condition Attribute Value
                 </label>
                 <input [(ngModel)]="step.loop.condition_attribute_value" class="form-control" placeholder="Expected value">
+                <small *ngIf="step.loop.condition_type?.includes('attribute_') && !step.loop.condition_attribute_value" class="text-danger">Attribute value is required for this condition type.</small>
               </div>
               <div *ngIf="step.loop.loop_type === 'iterate_over_elements'" class="form-group">
-                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined ">
+                <div class="form-check form-group" *ngIf="step.useChildIterableSelector !== undefined">
                   <input class="form-check-input" type="checkbox" (change)="onUseChildIterableSelectorChange(step, $event)" id="flexCheckDefault">
                   <label class="form-check-label" for="flexCheckDefault">
                     use Child Iterable Selector
@@ -308,6 +322,7 @@
                   <option *ngIf="domElements.length === 0" [value]="null" disabled>No elements available</option>
                 </select>
                 <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
+                <small *ngIf="step.loop.loop_type === 'iterate_over_elements' && !step.loop.parent_iterable_element_selector" class="text-danger">Parent selector is required for iterate over elements.</small>
               </div>
               <div *ngIf="step.loop.parent_iterable_element_selector" class="form-group">
                 <label class="form-label">
@@ -335,6 +350,7 @@
                   <option *ngIf="domElements.length === 0" [value]="null" disabled>No elements available</option>
                 </select>
                 <small *ngIf="domElements.length === 0" class="text-warning">Connect to WebSocket or load DOM elements to enable selection.</small>
+                <small *ngIf="step.loop.loop_type === 'iterate_over_elements' && !step.loop.child_iterable_element_selector" class="text-danger">Child selector is required for iterate over elements.</small>
               </div>
               <div *ngIf="step.loop.child_iterable_element_selector" class="form-group">
                 <label class="form-label">
@@ -371,6 +387,9 @@
       </div>
     </div>
     <div>
+      <div *ngIf="validationErrors.length > 0" class="validation-errors">
+        <p class="text-danger" *ngFor="let error of validationErrors">{{ error }}</p>
+      </div>
       <button *ngIf="isRoot" (click)="exportToJson()" class="btn btn-fab m-1" title="Export as JSON" aria-label="Export as JSON">
         <span class="material-icons">file_download</span>
         Export

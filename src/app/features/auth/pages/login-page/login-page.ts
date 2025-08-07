@@ -17,7 +17,7 @@ export class LoginPageComponent {
   password: string = '';
   errorMessage: string = '';
 
-  constructor(private authService: AuthService, private router: ActivatedRoute, private messageService: MessageService) { }
+  constructor(private authService: AuthService, private messageService: MessageService) { }
   onSubmit() {
     if (!this.username || !this.password) {
       this.errorMessage = 'Please fill in all fields.';

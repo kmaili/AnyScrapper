@@ -18,7 +18,10 @@ export class WorkflowService {
     return this.http.put(`http://127.0.0.1:8000/api/workflows/${workflow.id}/`, { 
       'workflow_name': workflow.name,
       'start_url': workflow.startUrl,
-      'steps': workflow.steps
+      'steps': workflow.steps,
+      'is_scheduled': workflow.isScheduled,
+      'schedule_start_time': workflow.scheduleStartTime,
+      'schedule_frequency': workflow.scheduleFrequency
     })
   }
 
@@ -27,7 +30,10 @@ export class WorkflowService {
     return this.http.post('http://127.0.0.1:8000/api/workflows/new/', { 
       'workflow_name': workflow.name,
       'start_url': workflow.startUrl,
-      'steps': workflow.steps
+      'steps': workflow.steps,
+      'is_scheduled': workflow.isScheduled,
+      'schedule_start_time': workflow.scheduleStartTime,
+      'schedule_frequency': workflow.scheduleFrequency
   })
   }
 

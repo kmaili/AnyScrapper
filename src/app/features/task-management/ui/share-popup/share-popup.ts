@@ -17,7 +17,7 @@ export class SharePopup {
   @Input() workflowId!: number;
 
   permissions = {
-    execute: false,
+    execute: true,
     edit: false,
     delete: false
   };

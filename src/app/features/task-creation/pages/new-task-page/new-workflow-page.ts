@@ -22,7 +22,8 @@ export class NewTaskPageComponent implements OnInit {
   workflow: Workflow = {
     name: '',
     startUrl: '',
-    steps: []
+    steps: [],
+    isScheduled: false
   };
   constructor(private workflowService: WorkflowService, private messageService: MessageService, private router: Router) {}
   

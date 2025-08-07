@@ -5,27 +5,27 @@
 
       <div class="checkbox-group">
         <label class="checkbox-item">
-          <input type="checkbox" [(ngModel)]="permissions.execute" />
+          <input type="checkbox" [(ngModel)]="permissions.execute" disabled/>
           <span>Execute</span>
         </label>
         <label class="checkbox-item">
           <input type="checkbox" [(ngModel)]="permissions.edit" />
-          <span>Edit</span>
+          <span>Execute, Edit</span>
         </label>
         <label class="checkbox-item">
           <input type="checkbox" [(ngModel)]="permissions.delete" />
-          <span>Delete</span>
+          <span>Execute, Edit and Delete</span>
         </label>
       </div>
-
-      <button class="generate-btn" (click)="generateToken()">Generate Token</button>
 
       <div class="token-display" *ngIf="token">
         <span>{{ token }}</span>
         <button class="copy-btn" (click)="copyToken()">Copy</button>
       </div>
-
-      <button class="close-btn" (click)="modal.close()">Close</button>
+      <div class="d-flex gap-2">
+      <button class="btn btn-primary" (click)="generateToken()">Generate Token</button>
+      <button class="btn btn-secondary" (click)="modal.close()">Close</button>
+      </div>
     </div>
   </div>
 </ng-template>

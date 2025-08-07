@@ -8,4 +8,8 @@ export interface Workflow {
   steps: Step[];
   status?: 'completed' | 'in_progress' | 'draft' | 'failed';
   results?: number[];
+
+  isScheduled: boolean;
+  scheduleStartTime?: Date;
+  scheduleFrequency?: 'once' | 'daily' | 'weekly';
 }

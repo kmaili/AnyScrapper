@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-signup-page',
@@ -13,16 +15,34 @@ import { RouterLink } from '@angular/router';
 export class RegisterPageComponent {
   email: string = '';
   password: string = '';
+  username: string = '';
   errorMessage: string = '';
 
+    constructor(private authService: AuthService, private router: Router, private messageService: MessageService) { }
+    
   onSubmit() {
-    if (!this.email || !this.password) {
+    if (!this.email || !this.password || !this.username) {
       this.errorMessage = 'Please fill in all fields.';
       return;
     }
-    // Placeholder for signup logic (e.g., API call)
-    console.log('Signup attempt:', { email: this.email, password: this.password });
-    this.errorMessage = 'Signup successful!'; // Replace with actual API response
+    this.authService.register({ email: this.email, password: this.password, username: this.username }).subscribe({
+      next: () => {
+        this.errorMessage = '';
+        this.messageService.add({ severity: 'success', summary: 'Registration Successful', detail: 'You can now log in.' });
+        this.router.navigate(['/auth/login']);
+      },
+      error: (error) => {
+        console.error('Registration failed', error);
+        if (error.error.username) {
+          this.errorMessage = 'Username already exists.';
+        } else if (error.error.email) {
+          this.errorMessage = 'Email already exists.';
+        } else {
+          this.errorMessage = 'Registration failed. Please try again.';
+        }
+      }
+    });
+    
   }
 
   // Placeholder for Google OAuth login
